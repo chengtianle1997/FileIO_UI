@@ -345,23 +345,31 @@ namespace FileIO_UI
                 }
                 MainProcessBarSet((i + 1) * process_per_i);
             }
-            int process_per_record = process_by_step[1] / record_dict.Count;
-            int dict_counter = 0;
-            DebugWriteLine("开始检查扫描文件");
-            // Query all datarecord for File Size
-            foreach (DataRecord dataRecord in record_dict.Values)
+            if (record_dict.Count < 1)
             {
-                Single file_size = 0;
-                for (int i = 0; i < dataRecord.DataDiskDirList.Count; i++)
-                {
-                    file_size += GetSystemAllPath.GetDirectorySize(dataRecord.DataDiskDirList[i]) / 1000000;
-                    MainProcessBarSet(dict_counter * process_per_record + i * process_per_record / dataRecord.DataDiskDirList.Count);
-                }
-                dataRecord.DataSize = file_size.ToString() + "M";
-                Dispatcher.Invoke(new Action(() => { Data_Record_List.Items.Add(dataRecord); }));
-                dict_counter++;
-                MainProcessBarSet(dict_counter * process_per_record);   
+                DebugWriteLine("未检索到数据");
             }
+            else
+            {
+                int process_per_record = process_by_step[1] / record_dict.Count;
+                int dict_counter = 0;
+                DebugWriteLine("开始检查扫描文件");
+                // Query all datarecord for File Size
+                foreach (DataRecord dataRecord in record_dict.Values)
+                {
+                    Single file_size = 0;
+                    for (int i = 0; i < dataRecord.DataDiskDirList.Count; i++)
+                    {
+                        file_size += GetSystemAllPath.GetDirectorySize(dataRecord.DataDiskDirList[i]) / 1000000;
+                        MainProcessBarSet(dict_counter * process_per_record + i * process_per_record / dataRecord.DataDiskDirList.Count);
+                    }
+                    dataRecord.DataSize = file_size.ToString() + "M";
+                    Dispatcher.Invoke(new Action(() => { Data_Record_List.Items.Add(dataRecord); }));
+                    dict_counter++;
+                    MainProcessBarSet(dict_counter * process_per_record);
+                }
+            }
+            
             MainProcessBarSet(100);
             DebugWriteLine("数据盘扫描完成");
         }

@@ -48,6 +48,10 @@ namespace FileIO
             {
                 foreach (DirectoryInfo d in dirs)
                 {
+                    if(IsSystemHidden(d))
+                    {
+                        continue;
+                    }
                     list.Add(new FileNames
                     {
                         text = d.Name,
@@ -106,7 +110,19 @@ namespace FileIO
             return temp;
         }
 
-
+        private static bool IsSystemHidden(DirectoryInfo dirInfo)
+        {
+            if (dirInfo.Parent == null)
+            {
+                return false;
+            }
+            string attributes = dirInfo.Attributes.ToString();
+            if (attributes.IndexOf("Hidden") > -1 && attributes.IndexOf("System") > -1)
+            {
+                return true;
+            }
+            return false;
+        }
 
     }
 
