@@ -1,0 +1,30 @@
+﻿<Window x:Class="FileIO_UI.NewLineDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FileIO_UI"
+        mc:Ignorable="d"
+        Title="新建线路" Height="240" Width="300">
+    <Viewbox Stretch="UniformToFill">
+        <DockPanel Height="240" Width="300">
+            <Grid Background="#FFE5E5E5">
+                <Label Content="线路编号" HorizontalAlignment="Left" Margin="25,32,0,0" VerticalAlignment="Top" Height="26"/>
+                <TextBox HorizontalAlignment="Left" Margin="88,36,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+                <Grid Background="#FFE5E5E5">
+                    <Label Content="线路编号" HorizontalAlignment="Left" Margin="55,40,0,0" VerticalAlignment="Top" Height="26"/>
+                    <TextBox Name="LineNumText" HorizontalAlignment="Left" Margin="118,44,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+                    <Label Content="线路名称" HorizontalAlignment="Left" Margin="55,78,0,0" VerticalAlignment="Top" Height="26"/>
+                    <TextBox Name="LineNameText" HorizontalAlignment="Left" Margin="118,82,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+                    <Label Content="总里程" HorizontalAlignment="Left" Margin="61,121,0,0" VerticalAlignment="Top" Height="26"/>
+                    <TextBox Name="TotalMileageText" HorizontalAlignment="Left" Margin="118,125,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="87"/>
+                    <Button Content="取消" HorizontalAlignment="Left" Margin="74,169,0,0" VerticalAlignment="Top" Height="24" Width="66" Click="Cancel_Button_Click"/>
+                    <Button Content="确认" HorizontalAlignment="Left" Margin="172,169,0,0" VerticalAlignment="Top" Height="24" Width="66" Click="Confirm_Button_Click"/>
+                    <Label Content="公里" HorizontalAlignment="Left" Margin="204,120,0,0" VerticalAlignment="Top" Height="26"/>
+                    <Label Name="WarningLabel" Content="" HorizontalAlignment="Left" Margin="55,14,0,0" VerticalAlignment="Top" Height="25" Width="205" Foreground="Red"/>
+                </Grid>
+
+            </Grid>
+        </DockPanel>
+    </Viewbox>
+</Window>

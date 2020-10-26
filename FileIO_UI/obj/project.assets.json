@@ -1,0 +1,141 @@
+{
+  "version": 3,
+  "targets": {
+    ".NETCoreApp,Version=v3.1": {
+      "Ookii.Dialogs/1.1.0": {
+        "type": "package",
+        "dependencies": {
+          "Ookii.Dialogs.Wpf": "[1.1.0]"
+        },
+        "build": {
+          "build/Ookii.Dialogs.targets": {}
+        }
+      },
+      "Ookii.Dialogs.Wpf/1.1.0": {
+        "type": "package",
+        "compile": {
+          "lib/net45/Ookii.Dialogs.Wpf.dll": {}
+        },
+        "runtime": {
+          "lib/net45/Ookii.Dialogs.Wpf.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Ookii.Dialogs/1.1.0": {
+      "sha512": "AeCkNo61Lro2ypOsDI+ix3mB4xcwJU8FIcZD9fGNyJsNnoFe6Qq3WRazlt7iP8AtTdwCdX9RcZTBMMw7+GViEg==",
+      "type": "package",
+      "path": "ookii.dialogs/1.1.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Readme.txt",
+        "build/Ookii.Dialogs.targets",
+        "images/icon.png",
+        "ookii.dialogs.1.1.0.nupkg.sha512",
+        "ookii.dialogs.nuspec"
+      ]
+    },
+    "Ookii.Dialogs.Wpf/1.1.0": {
+      "sha512": "7VvWZe1PoZHp+MN3nb6gIwXW+DsxUREf+24O9DBDLS+gTmh/F1PYAEnd7AIKXD+Ni7JPjkRXcYAcsdcSo1G3vg==",
+      "type": "package",
+      "path": "ookii.dialogs.wpf/1.1.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net45/Ookii.Dialogs.Wpf.dll",
+        "lib/net45/Ookii.Dialogs.Wpf.pdb",
+        "lib/net45/Ookii.Dialogs.Wpf.xml",
+        "ookii.dialogs.wpf.1.1.0.nupkg.sha512",
+        "ookii.dialogs.wpf.nuspec"
+      ]
+    }
+  },
+  "projectFileDependencyGroups": {
+    ".NETCoreApp,Version=v3.1": [
+      "Ookii.Dialogs >= 1.1.0",
+      "Ookii.Dialogs.Wpf >= 1.1.0"
+    ]
+  },
+  "packageFolders": {
+    "C:\\Users\\voies\\.nuget\\packages\\": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "C:\\Users\\voies\\Desktop\\GodEyesProject\\FileIO_UI\\FileIO_UI\\FileIO_UI.csproj",
+      "projectName": "FileIO_UI",
+      "projectPath": "C:\\Users\\voies\\Desktop\\GodEyesProject\\FileIO_UI\\FileIO_UI\\FileIO_UI.csproj",
+      "packagesPath": "C:\\Users\\voies\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\voies\\Desktop\\GodEyesProject\\FileIO_UI\\FileIO_UI\\obj\\",
+      "projectStyle": "PackageReference",
+      "configFilePaths": [
+        "C:\\Users\\voies\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+      ],
+      "originalTargetFrameworks": [
+        "netcoreapp3.1"
+      ],
+      "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "netcoreapp3.1": {
+          "projectReferences": {}
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      }
+    },
+    "frameworks": {
+      "netcoreapp3.1": {
+        "dependencies": {
+          "Ookii.Dialogs": {
+            "target": "Package",
+            "version": "[1.1.0, )"
+          },
+          "Ookii.Dialogs.Wpf": {
+            "target": "Package",
+            "version": "[1.1.0, )"
+          }
+        },
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          },
+          "Microsoft.WindowsDesktop.App.WPF": {
+            "privateAssets": "none"
+          }
+        },
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.403\\RuntimeIdentifierGraph.json"
+      }
+    }
+  },
+  "logs": [
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "已使用“.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8”而不是项目目标框架“.NETCoreApp,Version=v3.1”还原包“Ookii.Dialogs.Wpf 1.1.0”。此包可能与项目不完全兼容。",
+      "libraryId": "Ookii.Dialogs.Wpf",
+      "targetGraphs": [
+        ".NETCoreApp,Version=v3.1"
+      ]
+    }
+  ]
+}
