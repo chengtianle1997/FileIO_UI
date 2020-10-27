@@ -17,7 +17,7 @@ using libMetroTunnelDB;
 using Microsoft.Win32;
 using Ookii.Dialogs.Wpf;
 using FileIO;
-
+using System.Runtime.CompilerServices;
 
 namespace FileIO_UI
 {
@@ -34,11 +34,15 @@ namespace FileIO_UI
 
         public static String BackupDiskDir;
 
+        public static bool MySQL_lock = false;
+
         public MainWindow()
         {
             InitializeComponent();
 
             // Initialize
+            DataAnalyze.DataAnalyzeInit(Database, this);
+            ConfigHandler.ConfigInit();
             DebugWriteLine("程序初始化完成");
 
             // Update UI
@@ -63,11 +67,12 @@ namespace FileIO_UI
             Thread refresh_lineinfo = new Thread(Refresh_LineInfo_t);
             refresh_lineinfo.Start();
             //refresh_lineinfo.Join();
-            Thread.Sleep(300);
+            //Thread.Sleep(300);
         }
 
         private void Refresh_LineInfo_t()
         {
+            Wait_MySQL();
             List<libMetroTunnelDB.Line> line = new List<libMetroTunnelDB.Line>();
             Database.QueryLine(ref line);
             Dispatcher.Invoke(new Action(() => { LineInfoList.Items.Clear(); }));
@@ -76,6 +81,7 @@ namespace FileIO_UI
                 Dispatcher.Invoke(new Action(() => { LineInfoList.Items.Add(
                     new LineInfo(line[i].LineNumber, line[i].LineName, line[i].TotalMileage, line[i].CreateTime)); }));
             }
+            Release_MySQL();
             DebugWriteLine("线路信息更新完成");
             return;
         }
@@ -85,11 +91,12 @@ namespace FileIO_UI
             Thread refresh_deviceinfo = new Thread(Refresh_DeviceInfo_t);
             refresh_deviceinfo.Start();
             //refresh_deviceinfo.Join();
-            Thread.Sleep(300);
+            //Thread.Sleep(300);
         }
 
         private void Refresh_DeviceInfo_t()
         {
+            Wait_MySQL();
             List<DetectDevice> detectDevices = new List<DetectDevice>();
             Database.QueryDetectDevice(ref detectDevices);
             Dispatcher.Invoke(new Action(() => { DetectDeviceInfoList.Items.Clear(); }));
@@ -99,6 +106,7 @@ namespace FileIO_UI
                     new DetectDeviceInfo(detectDevices[i].DetectDeviceNumber, 
                     detectDevices[i].DetectDeviceName, detectDevices[i].CreateTime)); }));
             }
+            Release_MySQL();
             DebugWriteLine("设备信息更新完成");
             return;
         }
@@ -144,9 +152,40 @@ namespace FileIO_UI
             Dispatcher.Invoke(new Action(() => { SubPbarText.Text = "0"; }));
         }
 
+        // MySQL Lock Manager
+        // Check if MySQL is valid
+        // return: true - valid; false - invalid
+        public bool MySQL_is_valid()
+        {
+            return !MySQL_lock;
+        }
+
+        // Wait until MySQL is valid and manipulate it
+        // return: true - success; false - timeout
+        public bool Wait_MySQL()
+        {
+            int time_counter = 0;
+            while (MySQL_lock)
+            {
+                time_counter++;
+                Thread.Sleep(50);
+                // Timeout: 3000ms
+                if (time_counter > 60)
+                    return false;
+            }
+            MySQL_lock = true;
+            return true;
+        }
+
+        // Release MySQL
+        public void Release_MySQL()
+        {
+            MySQL_lock = false;
+        }
+
         // Button click ------------------------------------------------------------------------------
         // -------------------------------------------------------------------------------------------
-        
+
         // Line List
         private void Refresh_Line_Button_Click(object sender, RoutedEventArgs e)
         {
@@ -360,10 +399,18 @@ namespace FileIO_UI
                     Single file_size = 0;
                     for (int i = 0; i < dataRecord.DataDiskDirList.Count; i++)
                     {
-                        file_size += GetSystemAllPath.GetDirectorySize(dataRecord.DataDiskDirList[i]) / 1000000;
+                        file_size += GetSystemAllPath.GetDirectorySize(dataRecord.DataDiskDirList[i]) / (1024 * 1024);
                         MainProcessBarSet(dict_counter * process_per_record + i * process_per_record / dataRecord.DataDiskDirList.Count);
                     }
-                    dataRecord.DataSize = file_size.ToString() + "M";
+                    // Decide the unit (M or G)
+                    if(file_size > 1024)
+                    {
+                        dataRecord.DataSize = ((float)(file_size / 1024)).ToString() + "G";
+                    }
+                    else
+                    {
+                        dataRecord.DataSize = file_size.ToString() + "M";
+                    }                    
                     Dispatcher.Invoke(new Action(() => { Data_Record_List.Items.Add(dataRecord); }));
                     dict_counter++;
                     MainProcessBarSet(dict_counter * process_per_record);
@@ -373,6 +420,195 @@ namespace FileIO_UI
             MainProcessBarSet(100);
             DebugWriteLine("数据盘扫描完成");
         }
+
+        private static DetectRecordSelect detectRecordSelect;
+
+        internal static DetectRecordSelect DetectRecordSelect { get => detectRecordSelect; set => detectRecordSelect = value; }
+
+        private static List<bool> selected_data_record_valid = new List<bool>();
+        
+        private static List<DataRecord> selected_data_record = new List<DataRecord>();
+
+        private void Analyze_All_Button_Click(object sender, RoutedEventArgs e)
+        {
+            // Detect_record information collect
+            if (LineInfoList.SelectedItems.Count > 1)
+            {
+                DebugWriteLine("至多选择一个线路");
+                return;
+            }
+            if (LineInfoList.SelectedItems.Count < 1)
+            {
+                DebugWriteLine("未选中任何线路");
+                return;
+            }
+            LineInfo selected_line = LineInfoList.SelectedItem as LineInfo;
+
+            if (DetectDeviceInfoList.SelectedItems.Count > 1)
+            {
+                DebugWriteLine("至多选择一个检测设备");
+                return;
+            }
+            if (DetectDeviceInfoList.SelectedItems.Count < 1)
+            {
+                DebugWriteLine("未选中任何检测设备");
+                return;
+            }
+            DetectDeviceInfo selected_device = DetectDeviceInfoList.SelectedItem as DetectDeviceInfo;
+
+            Single Detect_Distance = 0;
+            try
+            {
+                Detect_Distance = Convert.ToSingle(Detect_Distance_Text.Text);
+            }
+            catch (System.FormatException)
+            {
+                ;
+            }
+            Single Start_Loc = 0;
+            try
+            {
+                Start_Loc = Convert.ToSingle(Start_Mileage_Text.Text);
+            }
+            catch (System.FormatException)
+            {
+                ;
+            }
+            Single Stop_Loc = 0;
+            try
+            {
+                Stop_Loc = Convert.ToSingle(End_Mileage_Text.Text);
+            }
+            catch (System.FormatException)
+            {
+                ;
+            }
+
+            if (Data_Record_List.SelectedItems.Count < 1)
+            {
+                DebugWriteLine("至少选中一条数据记录");
+                return;
+            }
+            DetectRecordSelect = new DetectRecordSelect(selected_line, selected_device, Detect_Distance, Start_Loc, Stop_Loc);
+            selected_data_record.Clear();
+            selected_data_record_valid.Clear();
+            for (int i = 0; i < Data_Record_List.SelectedItems.Count; i++)
+            {
+                selected_data_record.Add(Data_Record_List.SelectedItems[i] as DataRecord);
+                //Check DataRecord Existence
+                DetectRecord detectRecord = null;
+                Database.QueryDetectRecord(ref detectRecord, selected_data_record[i].CreateTime);
+                if(detectRecord != null)
+                {
+                    // Duplicated
+                    selected_data_record_valid.Add(false);
+                }
+                else
+                {
+                    selected_data_record_valid.Add(true);
+                }
+            }
+            
+            //selected_data_record = Data_Record_List.SelectedItems as List<DataRecordDisp>;
+            // Confirmation Dialog
+            List<String> confirm_info_list = new List<string>();
+            confirm_info_list.Add("请确认以下导入数据无误：");
+            confirm_info_list.Add("线路名称: " + selected_line.LineName);
+            confirm_info_list.Add("设备名称: " + selected_device.DetectDeviceName);
+            for(int i = 0; i < selected_data_record.Count; i++)
+            {
+                if (selected_data_record_valid[i])
+                    confirm_info_list.Add("数据记录" + (i + 1).ToString() + ": "
+                        + selected_data_record[i].CreateTime + "  " + selected_data_record[i].DataSize);
+                else
+                    confirm_info_list.Add("数据记录" + (i + 1).ToString() + ": "
+                        + selected_data_record[i].CreateTime + "  已存在");
+            }
+            ConfirmDialog confirmDialog = new ConfirmDialog(confirm_info_list);
+            confirmDialog.true_false_event += new ConfirmDialog.TrueFalseDelegate(Analyze_All_Confirm_Process);
+            confirmDialog.ShowDialog();           
+        }
+
+        private void Analyze_All_Confirm_Process(bool value)
+        {
+            if (value)
+            {
+                Thread analyze_all_thread = new Thread(Analyze_All_Button_Click_t);
+                analyze_all_thread.Start();
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        
+
+        private void Analyze_All_Button_Click_t()
+        {
+            Wait_MySQL();
+            // Query to find new record_id (record_id start from 1)
+            int record_id_max = 0;
+            try
+            {
+                Database.GetMaxDetectRecordID(ref record_id_max);
+            }
+            catch(System.Exception)
+            {
+                ;
+            }
+            record_id_max++;
+            
+            //Database.InsertIntoDetectRecord(new DetectRecord())
+            int query_num = 0;
+            int query_all = record_dict.Count;
+
+            for(int i = 0; i < selected_data_record.Count; i++)
+            {
+                if (!selected_data_record_valid[i])
+                {
+                    DebugWriteLine("已存在的记录" + selected_data_record[i].CreateTime + "已跳过");
+                    continue;
+                }
+                    
+                DataRecord dataRecord = record_dict[Convert.ToDateTime(selected_data_record[i].CreateTime)];
+                // Create DetectRecord
+                DebugWriteLine("创建记录" + dataRecord.CreateTime);
+                Database.InsertIntoDetectRecord(new DetectRecord(Convert.ToInt32(DetectRecordSelect.line.LineNum), Convert.ToDateTime(dataRecord.CreateTime),
+                    DetectRecordSelect.device.DetectDeviceNumber, DetectRecordSelect.Detect_Distance, DetectRecordSelect.Start_Loc, DetectRecordSelect.Stop_Loc, record_id_max));
+
+                DebugWriteLine("扫描" + dataRecord.CreateTime + "文件...(" + query_num + "/" + query_all + ")");
+                for (int j = 0; j < dataRecord.DataDiskDirList.Count; j++)
+                {
+                    DebugWriteLine("开始分析" + dataRecord.DataDiskDirList[j] + "...");
+                    DataAnalyze.ScanFolder(dataRecord.DataDiskDirList[j], record_id_max);
+                    DebugWriteLine("分析完成" + dataRecord.DataDiskDirList[j]);
+                }
+                query_num++;
+                record_id_max++;
+            }
+            
+            //foreach (DataRecord dataRecord in record_dict.Values)
+            //{
+            //    // Create DetectRecord
+            //    DebugWriteLine("创建记录" + dataRecord.CreateTime);
+            //    Database.InsertIntoDetectRecord(new DetectRecord(Convert.ToInt32(DetectRecordSelect.line.LineNum), Convert.ToDateTime(dataRecord.CreateTime), 
+            //        DetectRecordSelect.device.DetectDeviceNumber, DetectRecordSelect.Detect_Distance, DetectRecordSelect.Start_Loc, DetectRecordSelect.Stop_Loc, record_id_max));                
+
+            //    DebugWriteLine("扫描" + dataRecord.CreateTime + "文件...(" + query_num + "/" + query_all + ")");
+            //    for(int i = 0; i < dataRecord.DataDiskDirList.Count; i++)
+            //    {
+            //        DebugWriteLine("开始分析" + dataRecord.DataDiskDirList[i] + "...");
+            //        DataAnalyze.ScanFolder(dataRecord.DataDiskDirList[i], record_id_max);                   
+            //    }
+            //    query_num++;
+            //    record_id_max++;
+            //}
+            Release_MySQL();
+        }
+
+        
+
     }
 
     // ListView binding class
@@ -440,6 +676,24 @@ namespace FileIO_UI
         {
             DataDiskDir += _DataDiskDir + "; ";
             DataDiskDirList.Add(_DataDiskDir);
+        }
+    }
+
+    class DetectRecordSelect
+    {
+        public LineInfo line;
+        public DetectDeviceInfo device;
+        public Single Detect_Distance;
+        public Single Start_Loc;
+        public Single Stop_Loc;
+
+        public DetectRecordSelect(LineInfo _line, DetectDeviceInfo _device, Single _Detect_Distance, Single _Start_Loc, Single _Stop_Loc)
+        {
+            line = _line;
+            device = _device;
+            Detect_Distance = _Detect_Distance;
+            Start_Loc = _Start_Loc;
+            Stop_Loc = _Stop_Loc;
         }
     }
 

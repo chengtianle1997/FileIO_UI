@@ -119,24 +119,24 @@
                                         <GridViewColumn Header="编号" Width="30" DisplayMemberBinding="{Binding RecordNum}"></GridViewColumn>
                                         <GridViewColumn Header="数据创建时间" Width="150" DisplayMemberBinding="{Binding CreateTime}"></GridViewColumn>
                                         <GridViewColumn Header="数据大小" Width="70" DisplayMemberBinding="{Binding DataSize}"></GridViewColumn>
-                                        <GridViewColumn Header="数据盘" Width="350" DisplayMemberBinding="{Binding DataDiskDir}"></GridViewColumn>
+                                        <GridViewColumn Header="数据盘" Width="160" DisplayMemberBinding="{Binding DataDiskDir}"></GridViewColumn>
                                     </GridView>
                                 </ListView.View>
                             </ListView>
 
                             <TextBlock HorizontalAlignment="Left" Margin="25,403,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Row="1"><Run Text="数据"/><Run Language="zh-cn" Text="盘"/><Run Text="记录"/></TextBlock>
                             <TextBlock HorizontalAlignment="Left" Margin="24,230,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Row="1"><Run Language="zh-cn" Text="检测长度"/></TextBlock>
-                            <TextBox HorizontalAlignment="Left" Margin="86,229,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Width="107" Grid.Row="1" Grid.ColumnSpan="6"/>
+                            <TextBox Name="Detect_Distance_Text" HorizontalAlignment="Left" Margin="86,229,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Width="107" Grid.Row="1" Grid.ColumnSpan="6"/>
                             <TextBlock HorizontalAlignment="Left" Margin="25,256,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Row="1"><Run Text="起"/><Run Language="zh-cn" Text="点"/><Run Text="里程"/></TextBlock>
                             <TextBlock HorizontalAlignment="Left" Margin="24,280,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Row="1"><Run Language="zh-cn" Text="终点里程"/></TextBlock>
-                            <TextBox HorizontalAlignment="Left" Margin="86,255,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Width="107" Grid.Row="1" Grid.ColumnSpan="6"/>
-                            <TextBox HorizontalAlignment="Left" Margin="86,280,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Width="107" Grid.Row="1" Grid.ColumnSpan="6"/>
+                            <TextBox Name="Start_Mileage_Text" HorizontalAlignment="Left" Margin="86,255,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Width="107" Grid.Row="1" Grid.ColumnSpan="6"/>
+                            <TextBox Name="End_Mileage_Text" HorizontalAlignment="Left" Margin="86,280,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Width="107" Grid.Row="1" Grid.ColumnSpan="6"/>
                             <Button Content="导入数据" HorizontalAlignment="Left" Margin="28,571,0,0" VerticalAlignment="Top" Grid.Row="1" Width="112" Height="25" Grid.ColumnSpan="4"/>
                             <TextBlock HorizontalAlignment="Left" Margin="58,233,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Row="1" Grid.Column="5"><Run Language="zh-cn" Text="数据库配置"/></TextBlock>
                             <Button Content="修改" HorizontalAlignment="Left" Margin="162,231,0,0" VerticalAlignment="Top" Grid.Row="1" Width="38" Grid.Column="5"/>
                             <TextBlock HorizontalAlignment="Left" Margin="58,253,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Row="1" Width="186" Grid.Column="5"><Run Language="zh-cn" Text="localhost"/><Run Text=":3306, user: root"/></TextBlock>
                             <Button Content="导入图像" HorizontalAlignment="Left" Margin="13,571,0,0" VerticalAlignment="Top" Grid.Row="1" Width="119" Height="25" Grid.ColumnSpan="3" Grid.Column="3"/>
-                            <Button Content="全部导入" HorizontalAlignment="Left" Margin="102,571,0,0" VerticalAlignment="Top" Grid.Row="1" Width="123" Height="25" Grid.Column="5"/>
+                            <Button Name="Analyze_All_Button" Content="全部导入" HorizontalAlignment="Left" Margin="102,571,0,0" VerticalAlignment="Top" Grid.Row="1" Width="123" Height="25" Grid.Column="5" Click="Analyze_All_Button_Click"/>
                             <TextBlock HorizontalAlignment="Left" Margin="19,0,0,0" TextWrapping="Wrap" VerticalAlignment="Center" Grid.ColumnSpan="3"><Run FontWeight="Bold" FontSize="14" Text="数据导入工作区"/></TextBlock>
                             <TextBlock HorizontalAlignment="Left" Margin="295,24,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="5"><Run FontWeight="Bold" FontSize="14" Text="数据处理工作"/><Run FontWeight="Bold" FontSize="14" Language="zh-cn" Text="区"/></TextBlock>
                             <TextBlock HorizontalAlignment="Left" Margin="301,48,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="5" Grid.Row="1"><Run Language="zh-cn" Text="数据库记录"/></TextBlock>

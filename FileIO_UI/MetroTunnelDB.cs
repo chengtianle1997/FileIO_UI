@@ -59,12 +59,12 @@ namespace libMetroTunnelDB
         public int LineID;
         public DateTime DetectTime;
         public String DeviceID;
-        public int Length;
-        public int Start_Loc;
-        public int Stop_Loc;
+        public Single Length;
+        public Single Start_Loc;
+        public Single Stop_Loc;
         public int? RecordID;
 
-        public DetectRecord(int _LineID, DateTime _DetectTime, String _DeviceID, int _Length, int _Start_Loc, int _Stop_Loc, int? _RecordID = null)
+        public DetectRecord(int _LineID, DateTime _DetectTime, String _DeviceID, Single _Length, Single _Start_Loc, Single _Stop_Loc, int? _RecordID = null)
         {
             LineID = _LineID;
             DetectTime = _DetectTime;
@@ -740,9 +740,9 @@ namespace libMetroTunnelDB
                 reader.GetInt32("LineID"),
                 reader.GetDateTime("DetectTime"),
                 reader.GetString("DeviceID"),
-                reader.GetInt32("Length"),
-                reader.GetInt32("Start_Loc"),
-                reader.GetInt32("Stop_Loc"),
+                reader.GetFloat("Length"),
+                reader.GetFloat("Start_Loc"),
+                reader.GetFloat("Stop_Loc"),
                 reader.GetInt32("RecordID")
             );
             return entry;
@@ -898,6 +898,27 @@ namespace libMetroTunnelDB
             List<DetectRecord> arr = new List<DetectRecord>();
             DoQuery(queryStr, ref arr, ReadDetectRecord);
             e = arr[0];
+        }
+
+        public void QueryDetectRecord(ref DetectRecord e, String CreateTime)
+        {
+            String queryStr = String.Format("SELECT * FROM DetectRecord WHERE DetectTime=\"{0}\"", CreateTime);
+            List<DetectRecord> arr = new List<DetectRecord>();
+            DoQuery(queryStr, ref arr, ReadDetectRecord);
+            if (arr.Count < 1)
+            {
+                e = null;
+                return;
+            }
+            e = arr[0];
+        }
+
+        public void GetMaxDetectRecordID(ref int record_id)
+        {
+            String queryStr = "SELECT MAX(RecordID) FROM DetectRecord";
+            List<DetectRecord> arr = new List<DetectRecord>();
+            DoQuery(queryStr, ref arr, ReadDetectRecord);
+            record_id = (int)arr[0].RecordID;
         }
 
         public void QueryDataOverview(ref List<DataOverview> arr, int RecordID, float min_Distance = 0, float max_Distance = float.MaxValue)

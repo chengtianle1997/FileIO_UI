@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using libMetroTunnelDB;
+using FileIO_UI;
 
 namespace FileIO
 {
@@ -132,15 +133,16 @@ namespace FileIO
         private static MetroTunnelDB DataBase;
         public static int threadControlCounter = 0;
         public static int record_id = 1;
-        public static void DataAnalyzeInit(MetroTunnelDB database)
+        private static MainWindow mw;
+        public static void DataAnalyzeInit(MetroTunnelDB database, MainWindow _mw)
         {
             DataBase = database;
-            DataBase.InsertIntoLine(new Line("1", "1号线", 234.43F, DateTime.Now));
-            DataBase.InsertIntoDetectRecord(new DetectRecord(record_id, new DateTime(2019, 11, 28, 23, 30, 00), "1-01", 300, 23421, 23721));
-
+            mw = _mw;
+            //DataBase.InsertIntoLine(new Line("1", "1号线", 234.43F, DateTime.Now));
+            //DataBase.InsertIntoDetectRecord(new DetectRecord(record_id, new DateTime(2019, 11, 28, 23, 30, 00), "1-01", 300, 23421, 23721));
         }
         //The Main Function
-        public static void AnalyzeAll(object o_filepath)
+        public static void AnalyzeAll(MainWindow _mw, object o_filepath)
         {
             string filepath = (string)o_filepath;
             List<FileNames> Filelist = new List<FileNames>();
@@ -151,14 +153,16 @@ namespace FileIO
                 string timeFolder = filepath +"\\"+ Filelist[i].text;          
                 //Thread ScanFolderThread = new Thread(ScanFolder);
                 //ScanFolderThread.Start(timeFolder);
-                Console.WriteLine("Analyzing " + timeFolder + ".....\n");
-                ScanFolder(timeFolder);
+                //Console.WriteLine("Analyzing " + timeFolder + ".....\n");
+                mw.DebugWriteLine("开始分析" + timeFolder + "...");
+                ScanFolder(timeFolder, record_id);
             }
         }
 
         //Scan one folder for time
-        public static void ScanFolder(object o_filepath)
+        public static void ScanFolder(object o_filepath, int _record_id)
         {
+            record_id = _record_id;
             string filepath = (string)o_filepath;
             string CalResFolder = filepath + "\\CalResult";
             //string EncodeFolder = filepath + "\\EncodeResult";
@@ -177,15 +181,24 @@ namespace FileIO
             string filepath = (string)o_filepath;
             List<FileNames> Filelist = new List<FileNames>();
             GetSystemAllPath.GetallDirectory(Filelist, filepath);
+            if(Filelist.Count() < 1)
+            {
+                mw.DebugWriteLine("未发现数据文件");
+                return;
+            }
             for(int i=0 ; i<Filelist.Count() ; i++)
             {
                 string csvpath = filepath + "\\" + Filelist[i].text;
-                Console.WriteLine("---Analyzing " + Filelist[i].text + ".....\n");
+                //Console.WriteLine("---Analyzing " + Filelist[i].text + ".....\n");
+                mw.DebugWriteLine("分析数据文件" + Filelist[i].text + "...");
                 //Handle the csv-Result
                 CSVHandler.HandleCSV(DataBase, record_id, csvpath);
+                mw.DebugWriteLine("分析数据文件" + Filelist[i].text + "完成");
             }
+            mw.DebugWriteLine("模型解析...");
             // Generate DataConv
             DataBase.ProcessDataRaw(record_id);
+            mw.DebugWriteLine("模型解析完成");
         }
 
         //Deal with EncodeResult
@@ -195,12 +208,19 @@ namespace FileIO
             string EncodeResult = filepath + "\\EncodeResult";
             List<FileNames> Filelist = new List<FileNames>();
             GetSystemAllPath.GetallDirectory(Filelist, EncodeResult);
-            Console.WriteLine("---Decoding " + EncodeResult + ".....\n");
+            //Console.WriteLine("---Decoding " + EncodeResult + ".....\n");
+            if(Filelist.Count() < 1)
+            {
+                mw.DebugWriteLine("未发现视频文件");
+                return;
+            }
+            mw.DebugWriteLine("解析视频目录" + EncodeResult + "...");
             for (int i = 0; i < Filelist.Count(); i++)
             {
                 string mjpegpath = EncodeResult + "\\" + Filelist[i].text +"\\"+ Filelist[i].children[0].text;
                 string outputpath = filepath + "\\DecodeResult\\" + Filelist[i].text;
-                Console.WriteLine("------Decoding " + Filelist[i].text + ".....\n");
+                //Console.WriteLine("------Decoding " + Filelist[i].text + ".....\n");
+                mw.DebugWriteLine("解析视频文件" + Filelist[i].text + "...");
                 //Decode the mjpeg
                 MjpegHandler.DecodeParam param;
                 param.inputvideo = mjpegpath;
@@ -210,12 +230,27 @@ namespace FileIO
                 //MjpegHandler.CallPythonToDecode(param);
                 
             }
+            mw.DebugWriteLine("导入视频序列" + EncodeResult + "...");
+            for(int i = 0; i < Filelist.Count(); i++)
+            {
+                mw.DebugWriteLine("导入视频序列" + Filelist[i].text + "...");
+                string image_root_url = filepath + "\\DecodeResult\\" + Filelist[i].text;
+                string mjpeg_csv_path = EncodeResult + "\\" + Filelist[i].text + "\\" + Filelist[i].children[1].text;
+                // Get CameraNum from filename
+                int cam_num = ConfigHandler.GetCameraNum(Filelist[i].children[1].text.Split("_")[1].Split(".")[0].ToCharArray());
+                if (cam_num < 1 || cam_num == 999)
+                    continue;
+                CSVHandler.HandleTimestamp(DataBase, record_id, cam_num, mjpeg_csv_path, image_root_url);
+                mw.DebugWriteLine("导入视频序列" + Filelist[i].text + "完成");
+            }
+            mw.DebugWriteLine("导入视频序列" + EncodeResult + "完成");
             while(threadControlCounter < Filelist.Count())
             {
                 Thread.Sleep(100);
             }
             threadControlCounter = 0;
-            Console.WriteLine("---Decoding Finished " + EncodeResult + ".....\n");
+            //Console.WriteLine("---Decoding Finished " + EncodeResult + ".....\n");
+            mw.DebugWriteLine("解析视频目录" + EncodeResult + "完成");
         }
         
         //Deal with Mjpeg
