@@ -127,6 +127,14 @@ namespace FileIO_UI
             }
         }
 
+        public void DebugReWriteLine(String debug_string)
+        {
+            Dispatcher.Invoke(new Action(() =>
+            {
+                DebugList.Items[DebugList.Items.Count - 1] = DateTime.Now.ToString() + ": " + debug_string;
+            }));
+        }
+
         // Process Bar
         public void MainProcessBarSet(int percentage)
         {
@@ -547,6 +555,9 @@ namespace FileIO_UI
         private void Analyze_All_Button_Click_t()
         {
             Wait_MySQL();
+            MainProcessBarReset();
+            SubProcessBarReset();
+
             // Query to find new record_id (record_id start from 1)
             int record_id_max = 0;
             try
@@ -567,22 +578,22 @@ namespace FileIO_UI
             {
                 if (!selected_data_record_valid[i])
                 {
-                    DebugWriteLine("已存在的记录" + selected_data_record[i].CreateTime + "已跳过");
+                    DebugWriteLine("已存在的记录 " + selected_data_record[i].CreateTime + " 已跳过");
                     continue;
                 }
                     
                 DataRecord dataRecord = record_dict[Convert.ToDateTime(selected_data_record[i].CreateTime)];
                 // Create DetectRecord
-                DebugWriteLine("创建记录" + dataRecord.CreateTime);
+                DebugWriteLine("创建记录 " + dataRecord.CreateTime);
                 Database.InsertIntoDetectRecord(new DetectRecord(Convert.ToInt32(DetectRecordSelect.line.LineNum), Convert.ToDateTime(dataRecord.CreateTime),
                     DetectRecordSelect.device.DetectDeviceNumber, DetectRecordSelect.Detect_Distance, DetectRecordSelect.Start_Loc, DetectRecordSelect.Stop_Loc, record_id_max));
 
-                DebugWriteLine("扫描" + dataRecord.CreateTime + "文件...(" + query_num + "/" + query_all + ")");
+                DebugWriteLine("扫描 " + dataRecord.CreateTime + " 文件...(" + query_num + "/" + query_all + ")");
                 for (int j = 0; j < dataRecord.DataDiskDirList.Count; j++)
                 {
-                    DebugWriteLine("开始分析" + dataRecord.DataDiskDirList[j] + "...");
+                    DebugWriteLine("开始分析 " + dataRecord.DataDiskDirList[j] + "...");
                     DataAnalyze.ScanFolder(dataRecord.DataDiskDirList[j], record_id_max);
-                    DebugWriteLine("分析完成" + dataRecord.DataDiskDirList[j]);
+                    DebugWriteLine("分析完成 " + dataRecord.DataDiskDirList[j]);
                 }
                 query_num++;
                 record_id_max++;

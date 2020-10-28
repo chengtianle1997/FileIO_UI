@@ -132,7 +132,7 @@ namespace FileIO
     {
         private static MetroTunnelDB DataBase;
         public static int threadControlCounter = 0;
-        public static int record_id = 1;
+        // public static int record_id = 1;
         private static MainWindow mw;
         public static void DataAnalyzeInit(MetroTunnelDB database, MainWindow _mw)
         {
@@ -142,7 +142,7 @@ namespace FileIO
             //DataBase.InsertIntoDetectRecord(new DetectRecord(record_id, new DateTime(2019, 11, 28, 23, 30, 00), "1-01", 300, 23421, 23721));
         }
         //The Main Function
-        public static void AnalyzeAll(MainWindow _mw, object o_filepath)
+        public static void AnalyzeAll(MainWindow _mw, object o_filepath, int record_id)
         {
             string filepath = (string)o_filepath;
             List<FileNames> Filelist = new List<FileNames>();
@@ -160,9 +160,8 @@ namespace FileIO
         }
 
         //Scan one folder for time
-        public static void ScanFolder(object o_filepath, int _record_id)
+        public static void ScanFolder(object o_filepath, int record_id)
         {
-            record_id = _record_id;
             string filepath = (string)o_filepath;
             string CalResFolder = filepath + "\\CalResult";
             //string EncodeFolder = filepath + "\\EncodeResult";
@@ -171,12 +170,12 @@ namespace FileIO
             //Thread ScanEncThread = new Thread(ScanEncodeResult);
             //ScanCalThread.Start(CalResFolder);
             //ScanEncThread.Start(EncodeFolder);
-            ScanCalResult(CalResFolder);
-            ScanEncodeResult(EncodeFolder);
+            ScanCalResult(CalResFolder, record_id);
+            ScanEncodeResult(EncodeFolder, record_id);
         } 
         
         //Deal with CalResult
-        public static void ScanCalResult(object o_filepath)
+        public static void ScanCalResult(object o_filepath, int record_id)
         {
             string filepath = (string)o_filepath;
             List<FileNames> Filelist = new List<FileNames>();
@@ -197,12 +196,12 @@ namespace FileIO
             }
             mw.DebugWriteLine("模型解析...");
             // Generate DataConv
-            DataBase.ProcessDataRaw(record_id);
+            DataBase.ProcessDataRaw(record_id, mw);
             mw.DebugWriteLine("模型解析完成");
         }
 
         //Deal with EncodeResult
-        public static void ScanEncodeResult(object o_filepath)
+        public static void ScanEncodeResult(object o_filepath, int record_id)
         {
             string filepath = (string)o_filepath;
             string EncodeResult = filepath + "\\EncodeResult";
@@ -244,6 +243,9 @@ namespace FileIO
                 mw.DebugWriteLine("导入视频序列" + Filelist[i].text + "完成");
             }
             mw.DebugWriteLine("导入视频序列" + EncodeResult + "完成");
+            mw.DebugWriteLine("视频序列整合...");
+            DataBase.ProcessImageRaw(record_id, mw);
+            mw.DebugWriteLine("视频序列整合完成");
             while(threadControlCounter < Filelist.Count())
             {
                 Thread.Sleep(100);
@@ -278,8 +280,7 @@ namespace FileIO
             catch(SystemException)
             {
                 return false;
-            }
-            
+            }           
         }
     }
 

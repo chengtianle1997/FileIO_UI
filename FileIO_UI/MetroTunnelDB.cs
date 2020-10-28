@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using MySqlX.XDevAPI.CRUD;
 using FileIO;
 using System.ComponentModel.DataAnnotations.Schema;
+using FileIO_UI;
 
 namespace libMetroTunnelDB
 {
@@ -241,6 +242,14 @@ namespace libMetroTunnelDB
             CameraID = _CameraID;
             FileUrl = _FileUrl;
         }
+
+        public ImageRaw(int _RecordID, int _TimeStamp, int _CameraID)
+        {
+            RecordID = _RecordID;
+            TimeStamp = _TimeStamp;
+            CameraID = _CameraID;
+            FileUrl = "";
+        }
     }
 
     public class ImageDisp
@@ -249,13 +258,24 @@ namespace libMetroTunnelDB
         public float Distance;
         public String[] FileUrl;
 
+        public const int StringArrLength = 8;
+
         public ImageDisp(int _RecordID, float _Distance, String[] _FileUrl)
         {
             RecordID = _RecordID;
             Distance = _Distance;
-            FileUrl = new String[8];
-            for (int i = 0; i < 8; i++)
+            FileUrl = new String[StringArrLength];
+            for (int i = 0; i < StringArrLength; i++)
                 FileUrl[i] = _FileUrl[i];
+        }
+
+        public ImageDisp(int _RecordID, float _Distance)
+        {
+            RecordID = _RecordID;
+            Distance = _Distance;
+            FileUrl = new string[StringArrLength];
+            for (int i = 0; i < StringArrLength; i++)
+                FileUrl[i] = "";
         }
     }
 
@@ -748,6 +768,12 @@ namespace libMetroTunnelDB
             return entry;
         }
 
+        protected int ReadMaxDetectRecordID(MySqlDataReader reader)
+        {
+            int RecordID = reader.GetInt32("MAX(RecordID)");
+            return RecordID;
+        }
+
         protected DataOverview ReadDataOverview(MySqlDataReader reader)
         {
             DataOverview entry = new DataOverview
@@ -916,9 +942,9 @@ namespace libMetroTunnelDB
         public void GetMaxDetectRecordID(ref int record_id)
         {
             String queryStr = "SELECT MAX(RecordID) FROM DetectRecord";
-            List<DetectRecord> arr = new List<DetectRecord>();
-            DoQuery(queryStr, ref arr, ReadDetectRecord);
-            record_id = (int)arr[0].RecordID;
+            List<int> record_ids = new List<int>();
+            DoQuery(queryStr, ref record_ids, ReadMaxDetectRecordID);
+            record_id = record_ids[0];
         }
 
         public void QueryDataOverview(ref List<DataOverview> arr, int RecordID, float min_Distance = 0, float max_Distance = float.MaxValue)
@@ -1087,7 +1113,7 @@ namespace libMetroTunnelDB
         }
 
         // Merge DataRaw from 8 cameras
-        public void ProcessDataRaw(int record_id)
+        public void ProcessDataRaw(int record_id, MainWindow mw)
         {
             // Get alive camera index
             List<int> cam_alive = new List<int>();
@@ -1119,7 +1145,8 @@ namespace libMetroTunnelDB
                 DoQuery(queryStrMain, ref base_raw, ReadDataRaw);
                 if (base_raw.Count <= 0)
                     break;
-                Console.WriteLine("---Merging Group " + query_count + ": " + base_raw.Count +" lines.....\n");
+                //Console.WriteLine("---Merging Group " + query_count + ": " + base_raw.Count +" lines.....\n");
+                mw.DebugWriteLine("合并数据分组 " + query_count + ": 总计" + base_raw.Count + "行...");
                 // Deal the query_max lines of DataRaw
                 for (int i = 0; i < base_raw.Count; i++)
                 {
@@ -1158,8 +1185,8 @@ namespace libMetroTunnelDB
                         
                     }
 
-                    
-                    Console.Write("\r----->Merging..... " + i + "/" + base_raw.Count + " lines");
+                    mw.DebugReWriteLine("合并数据分组 " + query_count + ": " + i + "/" + base_raw.Count + "...");
+                    //Console.Write("\r----->Merging..... " + i + "/" + base_raw.Count + " lines");
 
                     // Convert x, y to s, a
                     for (int j = 0; j < cam_alive.Count; j++)
@@ -1175,8 +1202,138 @@ namespace libMetroTunnelDB
                     int ret = InsertIntoDataConv(dataConv);
                     if (!Convert.ToBoolean(ret))
                         Console.WriteLine("Insert MySQL Failed !!!");
+                    
+                    
+
                 }
+                mw.DebugReWriteLine("合并数据分组 " + query_count + ": 完成");
                 Console.WriteLine("\n");
+            }
+        }
+
+        // Get alive encode camera index
+        public void GetAliveCamEnc(int record_id, ref List<int> cam_alive)
+        {
+            int max_record_num = 10;
+            String formatStr = "SELECT * FROM ImageRaw WHERE RecordID={0} AND CameraID={1} LIMIT 0,{2}";
+            for(int i = 1; i <= camera_num_max; i++)
+            {
+                String queryStr = String.Format(formatStr, record_id, i, max_record_num);
+                List<ImageRaw> arr = new List<ImageRaw>();
+                DoQuery(queryStr, ref arr, ReadImageRaw);
+                if(arr.Count > max_record_num - 1)
+                {
+                    cam_alive.Add(i);
+                }
+            }
+        }
+
+        // Get the interval time between two encode frames
+        public int GetFrameIntervalEnc(int record_id, int camera_id)
+        {
+            int max_record_num = 10;
+            String formatStr = "SELECT * FROM ImageRaw WHERE RecordID={0} AND CameraID={1} LIMIT 0,{2}";
+            String queryStr = String.Format(formatStr, record_id, camera_id, max_record_num);
+            List<ImageRaw> arr = new List<ImageRaw>();
+            DoQuery(queryStr, ref arr, ReadImageRaw);
+            if(arr.Count < max_record_num)
+            {
+                return 0;
+            }
+            int interval_sum = 0;
+            int interval_count = 0;
+            for(int i = 1; i < arr.Count; i++)
+            {
+                int int_seq = arr[i].TimeStamp - arr[i - 1].TimeStamp;
+                if(int_seq > 0)
+                {
+                    interval_sum += int_seq;
+                    interval_count++;
+                }
+            }
+            int interval = interval_sum / interval_count;
+            return interval;
+        }
+
+        // Merge ImageRaw from 8 cameras
+        public void ProcessImageRaw(int record_id, MainWindow mw)
+        {
+            // Get alive camera index
+            List<int> cam_alive = new List<int>();
+            GetAliveCamEnc(record_id, ref cam_alive);
+
+            // Get frame interval
+            int interval = GetFrameInterval(record_id, cam_alive[0]);
+            if (interval == 0)
+                return;
+
+            // Basic Param
+            int max_int = Convert.ToInt32(interval * 0.3);
+            int query_max = 5000;
+            int query_count = 0;
+            bool query_exit = false;
+            String formatStr = "SELECT * FROM ImageRaw WHERE RecordID={0} AND CameraID={1} AND TimeStamp>={2} AND TimeStamp<={3}";
+            String formatStrMain = "SELECT * FROM ImageRaw WHERE RecordID={0} AND CameraID={1} LIMIT {2},{3}";
+            int cam_base = cam_alive[0];
+            int MillisecondMax = 24 * 3600 * 1000;
+
+            while(!query_exit)
+            {
+                // Query cam_base
+                List<ImageRaw> base_raw = new List<ImageRaw>();
+                String queryStrMain = String.Format(formatStrMain, record_id, cam_base, query_max * query_count, query_max);
+                query_count++;
+                DoQuery(queryStrMain, ref base_raw, ReadImageRaw);
+                if (base_raw.Count <= 0)
+                    break;
+                mw.DebugWriteLine("合并视频序列分组 " + query_count + ": 总计" + base_raw.Count + "行...");
+                for (int i = 0; i < base_raw.Count; i++)
+                {
+                    int time_base = base_raw[i].TimeStamp;
+                    List<ImageRaw> line = new List<ImageRaw>();
+                    //List<ImageDisp> line_conv = new List<ImageDisp>();
+                    ImageDisp imageDisp = new ImageDisp(record_id, Convert.ToSingle(time_base));
+                    // Save the data from base camera
+                    line.Add(base_raw[i]);
+                    // Query each camera
+                    for (int j = 1; j < cam_alive.Count; j++)
+                    {
+                        String queryStr = String.Format(formatStr, record_id, cam_alive[j], Math.Max(time_base - max_int, 0), Math.Min(time_base + max_int, MillisecondMax));
+                        List<ImageRaw> arr = new List<ImageRaw>();
+                        DoQuery(queryStr, ref arr, ReadImageRaw);
+                        if (arr.Count < 1)
+                        {
+                            line.Add(new ImageRaw(record_id, time_base, cam_alive[j]));
+                            continue;
+                        }
+                        if (arr.Count == 1)
+                        {
+                            line.Add(arr[0]);
+                            continue;
+                        }
+                        // Find the closest timestamp
+                        int close_time_index = 0;
+                        for (int k = 1; k < arr.Count; k++)
+                        {
+                            if (Math.Abs(arr[k].TimeStamp - time_base) < Math.Abs(arr[close_time_index].TimeStamp - time_base))
+                                close_time_index = k;
+                        }
+                        // Save the closest timestamp
+                        line.Add(arr[close_time_index]);
+                    }
+
+                    mw.DebugReWriteLine("合并视频序列分组 " + query_count + ": " + i + "/" + base_raw.Count + "...");
+
+                    // Save info and Send to MySQL
+                    for (int j = 0; j < cam_alive.Count; j++)
+                    {
+                        // FileUrl index start from 0: 0 - CAM1, 1 - CAM2, etc
+                        imageDisp.FileUrl[cam_alive[j] - 1] = line[j].FileUrl;
+                    }
+                    InsertIntoImageDisp(imageDisp);
+
+                }
+                mw.DebugReWriteLine("合并视频序列分组 " + query_count + ": 完成");
             }
         }
 
