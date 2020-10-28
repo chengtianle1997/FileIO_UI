@@ -3,6 +3,7 @@ using System.Diagnostics.Contracts;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows.Controls;
+using FileIO_UI;
 using libMetroTunnelDB;
 
 namespace FileIO
@@ -39,7 +40,7 @@ namespace FileIO
         }
 
         // Read and Handle the mjpeg-timestamp.csv file
-        public static void HandleTimestamp(MetroTunnelDB database, int record_id, int cam_num, string csv_file_path, string mjpeg_root_path)
+        public static void HandleTimestamp(MetroTunnelDB database, int record_id, int cam_num, string csv_file_path, string mjpeg_root_path, MainWindow mw)
         {
             FileStream fs = new FileStream(csv_file_path, FileMode.Open, System.IO.FileAccess.Read);
             StreamReader sr = new StreamReader(fs);
@@ -94,7 +95,7 @@ namespace FileIO
         }
 
         //Read and Handle the csv-Result File
-        public static void HandleCSV(MetroTunnelDB database, int record_id, string filepath)
+        public static void HandleCSV(MetroTunnelDB database, int record_id, string filepath, MainWindow mw)
         {
             FileStream fs = new FileStream(filepath, FileMode.Open, System.IO.FileAccess.Read);
             StreamReader sr = new StreamReader(fs);
@@ -232,5 +233,21 @@ namespace FileIO
             }
         }
 
+        public static int GetLineCount(string filepath, MainWindow mw)
+        {
+            FileStream fs = new FileStream(filepath, FileMode.Open, System.IO.FileAccess.Read);
+            StreamReader sr = new StreamReader(fs);
+
+            int line_counter = 0;
+            string strline;
+
+            while ((strline = sr.ReadLine()) != null)
+            {
+                line_counter++;
+                mw.DebugReWriteLine("扫描数据文件: 已发现" + line_counter +"条数据");
+            }
+
+            return line_counter;
+        }
     }
 }

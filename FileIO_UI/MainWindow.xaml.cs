@@ -1,23 +1,11 @@
-﻿using System;
+﻿using FileIO;
+using libMetroTunnelDB;
+using Ookii.Dialogs.Wpf;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using libMetroTunnelDB;
-using Microsoft.Win32;
-using Ookii.Dialogs.Wpf;
-using FileIO;
-using System.Runtime.CompilerServices;
 
 namespace FileIO_UI
 {
@@ -136,6 +124,102 @@ namespace FileIO_UI
         }
 
         // Process Bar
+        private static List<int> stage_finished_percent = new List<int>();
+        private static int same_process_num = 1;
+
+        private static int process_num = 0;
+        private static int task_sum = 0;
+        private static int stage_num = 1;
+
+        // _stage_finished_percent list start from 0 and end at 100
+        // same_process_num: several process have the same name and same stage_percent
+        public void ProcessInit(string process_name, List<int> _stage_finished_percent, int _same_process_num = 1)
+        {
+            if (_stage_finished_percent.Count < 2 || _stage_finished_percent[0] != 0 || _stage_finished_percent[_stage_finished_percent.Count - 1] != 100 || _same_process_num < 1)
+            {
+                stage_finished_percent.Clear();
+                return;
+            }
+            if (!IsCheckStageListSorted(_stage_finished_percent))
+            {
+                stage_finished_percent.Clear();
+                return;
+            }               
+            stage_finished_percent = _stage_finished_percent;
+            same_process_num = _same_process_num;
+            process_num = 0;
+            task_sum = 0;
+            MainProcessBarReset();
+            SubProcessBarReset();
+        }
+
+        // Init stage with its number, process number( >= 1 ) and sum of tasks
+        public void MainProcessReport(string stage_name, int _task_sum, int _process_num, int _stage_num)
+        {
+            if (_process_num < 1 || _task_sum < 1)
+                return;
+            task_sum = _task_sum;
+            process_num = _process_num;
+            Dispatcher.Invoke(new Action(() => { SubPBarInfo.Text = stage_name; }));
+            if (_stage_num > 0 || _stage_num < stage_finished_percent.Count)
+                stage_num = _stage_num;
+        }
+
+        // stage_num start from 1 and end at n - 1
+        public void SubProcessReport(int task_finished_now, int _task_sum = 0, string stage_name = null, int _stage_num = 0)
+        {
+            if (stage_finished_percent.Count < 1 || stage_num < 1 || stage_num >= stage_finished_percent.Count)
+                return;
+            if (_stage_num > 0 || _stage_num < stage_finished_percent.Count)
+                stage_num = _stage_num;
+            int process_finished_now = (int)(100 * (process_num - 1) / same_process_num + 
+                (stage_finished_percent[stage_num - 1] + (stage_finished_percent[stage_num] - stage_finished_percent[stage_num - 1]) * Math.Min((float)task_finished_now / task_sum, 1)) / same_process_num);
+            int stage_finished_now = (int)Math.Min((float)task_finished_now / task_sum, 1);
+            if (process_finished_now > 100)
+                return;
+            MainProcessBarSet(process_finished_now);
+            if (stage_finished_now > 100)
+                return;
+            SubProcessBarSet(stage_finished_now);
+            if(stage_name != null)
+                Dispatcher.Invoke(new Action(() => { SubPBarInfo.Text = stage_name; }));            
+        }
+        public void MainProcessFinished(int process_num)
+        {
+            int process_finished_now = 100 * (process_num) / same_process_num;
+            if (process_finished_now > 100)
+                return;
+            MainProcessBarSet(process_finished_now);
+        }
+        public void SubProcessFinished(int stage_num)
+        {
+            if (stage_finished_percent.Count < 1 || stage_num < 1 || stage_num >= stage_finished_percent.Count)
+                return;
+            int process_finished_now = 100 * (process_num - 1) / same_process_num + stage_finished_percent[stage_num] / same_process_num;
+            int stage_finished_now = 100;
+            if (process_finished_now > 100)
+                return;
+            MainProcessBarSet(process_finished_now);
+            SubProcessBarSet(stage_finished_now);
+        }
+        public void ProcessFinished()
+        {
+            stage_finished_percent.Clear();
+            process_num = 0;
+            task_sum = 0;
+            MainProcessBarSet(100);
+        }
+
+        private bool IsCheckStageListSorted(List<int> _stage_finished_percent)
+        {
+            for(int i = 1; i < _stage_finished_percent.Count; i++)
+            {
+                if ((_stage_finished_percent[i] - _stage_finished_percent[i - 1]) < 0)
+                    return false;
+            }
+            return true;
+        }
+
         public void MainProcessBarSet(int percentage)
         {
             Dispatcher.Invoke(new Action(() => { MainPbar.Value = percentage; }));
@@ -159,6 +243,8 @@ namespace FileIO_UI
             Dispatcher.Invoke(new Action(() => { SubPbar.Value = 0; }));
             Dispatcher.Invoke(new Action(() => { SubPbarText.Text = "0"; }));
         }
+
+
 
         // MySQL Lock Manager
         // Check if MySQL is valid
@@ -555,9 +641,7 @@ namespace FileIO_UI
         private void Analyze_All_Button_Click_t()
         {
             Wait_MySQL();
-            MainProcessBarReset();
-            SubProcessBarReset();
-
+            
             // Query to find new record_id (record_id start from 1)
             int record_id_max = 0;
             try
@@ -574,6 +658,8 @@ namespace FileIO_UI
             int query_num = 0;
             int query_all = record_dict.Count;
 
+            bool isFirstDataRecord = true;
+
             for(int i = 0; i < selected_data_record.Count; i++)
             {
                 if (!selected_data_record_valid[i])
@@ -581,20 +667,61 @@ namespace FileIO_UI
                     DebugWriteLine("已存在的记录 " + selected_data_record[i].CreateTime + " 已跳过");
                     continue;
                 }
-                    
+
                 DataRecord dataRecord = record_dict[Convert.ToDateTime(selected_data_record[i].CreateTime)];
+
+                if(isFirstDataRecord)
+                {
+                    List<int> stage_percent = new List<int>();
+                    stage_percent.Add(0);
+                    for (int h = 0; h < dataRecord.DataDiskDirList.Count; h++)
+                    {
+                        // CSV read
+                        stage_percent.Add(stage_percent[stage_percent.Count - 1] + 25 / dataRecord.DataDiskDirList.Count);
+                        // Save timestamp
+                        stage_percent.Add(stage_percent[stage_percent.Count - 1] + 20 / dataRecord.DataDiskDirList.Count);
+                        // Decode
+                        stage_percent.Add(stage_percent[stage_percent.Count - 1] + 25 / dataRecord.DataDiskDirList.Count);
+                    }
+                    stage_percent.Add(stage_percent[stage_percent.Count - 1] + 15);
+                    stage_percent.Add(100);
+                    ProcessInit("分析数据和图像", stage_percent, selected_data_record.Count);
+                    isFirstDataRecord = false;
+                }
+                
                 // Create DetectRecord
                 DebugWriteLine("创建记录 " + dataRecord.CreateTime);
                 Database.InsertIntoDetectRecord(new DetectRecord(Convert.ToInt32(DetectRecordSelect.line.LineNum), Convert.ToDateTime(dataRecord.CreateTime),
                     DetectRecordSelect.device.DetectDeviceNumber, DetectRecordSelect.Detect_Distance, DetectRecordSelect.Start_Loc, DetectRecordSelect.Stop_Loc, record_id_max));
-
+                
                 DebugWriteLine("扫描 " + dataRecord.CreateTime + " 文件...(" + query_num + "/" + query_all + ")");
+                
                 for (int j = 0; j < dataRecord.DataDiskDirList.Count; j++)
                 {
                     DebugWriteLine("开始分析 " + dataRecord.DataDiskDirList[j] + "...");
-                    DataAnalyze.ScanFolder(dataRecord.DataDiskDirList[j], record_id_max);
+                    int stage_counter = 1;
+                    //DataAnalyze.ScanFolder(dataRecord.DataDiskDirList[j], record_id_max);
+                    string CalResFolder = dataRecord.DataDiskDirList[j] + "\\CalResult";
+                    string EncodeFolder = dataRecord.DataDiskDirList[j];
+                    // Scan a csv CalResult file for line counting                   
+                    List<FileNames> Filelist = new List<FileNames>();
+                    GetSystemAllPath.GetallDirectory(Filelist, CalResFolder);
+                    if (Filelist.Count() < 1)
+                    {
+                        DebugWriteLine("未发现数据文件");
+                        return;
+                    }
+                    DebugWriteLine("扫描数据文件" + Filelist[i].text + "...");
+                    string csvpath = CalResFolder + "\\" + Filelist[i].text;
+                    int line_sum = CSVHandler.GetLineCount(csvpath, this);                   
+                    DebugReWriteLine("扫描数据文件" + "完成");
+                    MainProcessReport("分析数据 " + dataRecord.DataDiskDirList[j], (int)(line_sum * 1.01), i + 1, stage_counter++);
+                    DataAnalyze.ScanCalResult(CalResFolder, record_id_max);
+                    DataAnalyze.ScanEncodeResult(EncodeFolder, record_id_max);
                     DebugWriteLine("分析完成 " + dataRecord.DataDiskDirList[j]);
                 }
+                DataAnalyze.MergeCalResult(record_id_max);
+                DataAnalyze.MergeEncodeResult(record_id_max);
                 query_num++;
                 record_id_max++;
             }

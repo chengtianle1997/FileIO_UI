@@ -142,37 +142,37 @@ namespace FileIO
             //DataBase.InsertIntoDetectRecord(new DetectRecord(record_id, new DateTime(2019, 11, 28, 23, 30, 00), "1-01", 300, 23421, 23721));
         }
         //The Main Function
-        public static void AnalyzeAll(MainWindow _mw, object o_filepath, int record_id)
-        {
-            string filepath = (string)o_filepath;
-            List<FileNames> Filelist = new List<FileNames>();
-            GetSystemAllPath.GetallDirectory(Filelist,filepath);
+        //public static void AnalyzeAll(MainWindow _mw, object o_filepath, int record_id)
+        //{
+        //    string filepath = (string)o_filepath;
+        //    List<FileNames> Filelist = new List<FileNames>();
+        //    GetSystemAllPath.GetallDirectory(Filelist,filepath);
             
-            for(int i = 0; i < Filelist.Count(); i++ )
-            {              
-                string timeFolder = filepath +"\\"+ Filelist[i].text;          
-                //Thread ScanFolderThread = new Thread(ScanFolder);
-                //ScanFolderThread.Start(timeFolder);
-                //Console.WriteLine("Analyzing " + timeFolder + ".....\n");
-                mw.DebugWriteLine("开始分析" + timeFolder + "...");
-                ScanFolder(timeFolder, record_id);
-            }
-        }
+        //    for(int i = 0; i < Filelist.Count(); i++ )
+        //    {              
+        //        string timeFolder = filepath +"\\"+ Filelist[i].text;          
+        //        //Thread ScanFolderThread = new Thread(ScanFolder);
+        //        //ScanFolderThread.Start(timeFolder);
+        //        //Console.WriteLine("Analyzing " + timeFolder + ".....\n");
+        //        mw.DebugWriteLine("开始分析" + timeFolder + "...");
+        //        ScanFolder(timeFolder, record_id);
+        //    }
+        //}
 
         //Scan one folder for time
-        public static void ScanFolder(object o_filepath, int record_id)
-        {
-            string filepath = (string)o_filepath;
-            string CalResFolder = filepath + "\\CalResult";
-            //string EncodeFolder = filepath + "\\EncodeResult";
-            string EncodeFolder = filepath;
-            //Thread ScanCalThread = new Thread(ScanCalResult);
-            //Thread ScanEncThread = new Thread(ScanEncodeResult);
-            //ScanCalThread.Start(CalResFolder);
-            //ScanEncThread.Start(EncodeFolder);
-            ScanCalResult(CalResFolder, record_id);
-            ScanEncodeResult(EncodeFolder, record_id);
-        } 
+        //public static void ScanFolder(object o_filepath, int record_id)
+        //{
+        //    string filepath = (string)o_filepath;
+        //    string CalResFolder = filepath + "\\CalResult";
+        //    //string EncodeFolder = filepath + "\\EncodeResult";
+        //    string EncodeFolder = filepath;
+        //    //Thread ScanCalThread = new Thread(ScanCalResult);
+        //    //Thread ScanEncThread = new Thread(ScanEncodeResult);
+        //    //ScanCalThread.Start(CalResFolder);
+        //    //ScanEncThread.Start(EncodeFolder);
+        //    ScanCalResult(CalResFolder, record_id);
+        //    ScanEncodeResult(EncodeFolder, record_id);
+        //} 
         
         //Deal with CalResult
         public static void ScanCalResult(object o_filepath, int record_id)
@@ -189,15 +189,21 @@ namespace FileIO
             {
                 string csvpath = filepath + "\\" + Filelist[i].text;
                 //Console.WriteLine("---Analyzing " + Filelist[i].text + ".....\n");
+                
                 mw.DebugWriteLine("分析数据文件" + Filelist[i].text + "...");
                 //Handle the csv-Result
-                CSVHandler.HandleCSV(DataBase, record_id, csvpath);
+                CSVHandler.HandleCSV(DataBase, record_id, csvpath, mw);
                 mw.DebugWriteLine("分析数据文件" + Filelist[i].text + "完成");
             }
-            mw.DebugWriteLine("模型解析...");
+            
+        }
+
+        public static void MergeCalResult(int record_id)
+        {
+            mw.DebugWriteLine("数据模型解析...");
             // Generate DataConv
             DataBase.ProcessDataRaw(record_id, mw);
-            mw.DebugWriteLine("模型解析完成");
+            mw.DebugWriteLine("数据模型解析完成");
         }
 
         //Deal with EncodeResult
@@ -239,13 +245,11 @@ namespace FileIO
                 int cam_num = ConfigHandler.GetCameraNum(Filelist[i].children[1].text.Split("_")[1].Split(".")[0].ToCharArray());
                 if (cam_num < 1 || cam_num == 999)
                     continue;
-                CSVHandler.HandleTimestamp(DataBase, record_id, cam_num, mjpeg_csv_path, image_root_url);
+                CSVHandler.HandleTimestamp(DataBase, record_id, cam_num, mjpeg_csv_path, image_root_url, mw);
                 mw.DebugWriteLine("导入视频序列" + Filelist[i].text + "完成");
             }
             mw.DebugWriteLine("导入视频序列" + EncodeResult + "完成");
-            mw.DebugWriteLine("视频序列整合...");
-            DataBase.ProcessImageRaw(record_id, mw);
-            mw.DebugWriteLine("视频序列整合完成");
+            
             while(threadControlCounter < Filelist.Count())
             {
                 Thread.Sleep(100);
@@ -253,6 +257,13 @@ namespace FileIO
             threadControlCounter = 0;
             //Console.WriteLine("---Decoding Finished " + EncodeResult + ".....\n");
             mw.DebugWriteLine("解析视频目录" + EncodeResult + "完成");
+        }
+
+        public static void MergeEncodeResult(int record_id)
+        {
+            mw.DebugWriteLine("视频序列整合...");
+            DataBase.ProcessImageRaw(record_id, mw);
+            mw.DebugWriteLine("视频序列整合完成");
         }
         
         //Deal with Mjpeg
