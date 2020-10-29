@@ -119,7 +119,7 @@
                                         <GridViewColumn Header="编号" Width="30" DisplayMemberBinding="{Binding RecordNum}"></GridViewColumn>
                                         <GridViewColumn Header="数据创建时间" Width="150" DisplayMemberBinding="{Binding CreateTime}"></GridViewColumn>
                                         <GridViewColumn Header="数据大小" Width="70" DisplayMemberBinding="{Binding DataSize}"></GridViewColumn>
-                                        <GridViewColumn Header="数据盘" Width="160" DisplayMemberBinding="{Binding DataDiskDir}"></GridViewColumn>
+                                        <GridViewColumn Header="数据盘路径" Width="160" DisplayMemberBinding="{Binding DataDiskDir}"></GridViewColumn>
                                     </GridView>
                                 </ListView.View>
                             </ListView>
@@ -138,9 +138,58 @@
                             <Button Name="Analyze_All_Button" Content="全部导入" HorizontalAlignment="Left" Margin="31,571,0,0" VerticalAlignment="Top" Grid.Row="1" Width="203" Height="25" Grid.Column="5" Click="Analyze_All_Button_Click"/>
                             <TextBlock HorizontalAlignment="Left" Margin="19,0,0,0" TextWrapping="Wrap" VerticalAlignment="Center" Grid.ColumnSpan="3"><Run FontWeight="Bold" FontSize="14" Text="数据导入工作区"/></TextBlock>
                             <TextBlock HorizontalAlignment="Left" Margin="295,24,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="5"><Run FontWeight="Bold" FontSize="14" Text="数据处理工作"/><Run FontWeight="Bold" FontSize="14" Language="zh-cn" Text="区"/></TextBlock>
-                            <TextBlock HorizontalAlignment="Left" Margin="301,48,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="5" Grid.Row="1"><Run Language="zh-cn" Text="数据库记录"/></TextBlock>
-                            <ListBox Margin="301,68,0,0" HorizontalAlignment="Left" Width="376" Height="468" VerticalAlignment="Top" Grid.Row="1" Grid.Column="5"/>
-                            <Button Content="返回上一级" HorizontalAlignment="Left" Margin="523,44,0,0" VerticalAlignment="Top" Grid.Row="1" Grid.Column="5"/>
+                            <TextBlock HorizontalAlignment="Left" Margin="301,46,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="5" Grid.Row="1" Text="数据记录"/>
+                            
+                            <ListView Name="Line_List" Margin="301,104,0,0" HorizontalAlignment="Left" Width="375" Height="468" VerticalAlignment="Top" Grid.Row="1" Grid.Column="5"
+                                      ScrollViewer.HorizontalScrollBarVisibility="Auto" 
+                                      ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                      HorizontalContentAlignment="Center"
+                                      ItemContainerStyle="{StaticResource ResourceKey=ListViewItemStyle}"
+                                      Visibility="Hidden">
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn Header="编号" Width="40" DisplayMemberBinding="{Binding LineNum}"></GridViewColumn>
+                                        <GridViewColumn Header="线路名称" Width="120" DisplayMemberBinding="{Binding LineName}"></GridViewColumn>
+                                        <GridViewColumn Header="总里程" Width="60" DisplayMemberBinding="{Binding TotalMileage}"></GridViewColumn>
+                                        <GridViewColumn Header="创建时间" Width="140" DisplayMemberBinding="{Binding CreateTime}"></GridViewColumn>
+                                    </GridView>
+                                </ListView.View>
+                            </ListView>
+                            
+                            <ListView Name="Record_List" Margin="301,104,0,0" HorizontalAlignment="Left" Width="375" Height="468" VerticalAlignment="Top" Grid.Row="1" Grid.Column="5"
+                                      ScrollViewer.HorizontalScrollBarVisibility="Auto" 
+                                      ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                      HorizontalContentAlignment="Center"
+                                      ItemContainerStyle="{StaticResource ResourceKey=ListViewItemStyle}"
+                                      Visibility="Visible">
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn Header="编号" Width="40" DisplayMemberBinding="{Binding RecordNum}"></GridViewColumn>
+                                        <GridViewColumn Header="检测线路" Width="60" DisplayMemberBinding="{Binding LineNum}"></GridViewColumn>
+                                        <GridViewColumn Header="检测时间" Width="110" DisplayMemberBinding="{Binding CreateTime}"></GridViewColumn>
+                                        <GridViewColumn Header="检测里程" Width="60" DisplayMemberBinding="{Binding DetectDistance}"></GridViewColumn>
+                                        <GridViewColumn Header="起点里程" Width="60" DisplayMemberBinding="{Binding StartLoc}"></GridViewColumn>
+                                        <GridViewColumn Header="终点里程" Width="60" DisplayMemberBinding="{Binding StopLoc}"></GridViewColumn>
+                                        <GridViewColumn Header="检测设备" Width="100" DisplayMemberBinding="{Binding DeviceNum}"></GridViewColumn>
+                                    </GridView>
+                                </ListView.View>
+                            </ListView>
+
+                            <ListView Name="Data_List" Margin="301,104,0,0" HorizontalAlignment="Left" Width="375" Height="468" VerticalAlignment="Top" Grid.Row="1" Grid.Column="5"
+                                      ScrollViewer.HorizontalScrollBarVisibility="Auto" 
+                                      ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                      HorizontalContentAlignment="Center"
+                                      ItemContainerStyle="{StaticResource ResourceKey=ListViewItemStyle}"
+                                      Visibility="Hidden">
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn Header="里程位置" Width="175" DisplayMemberBinding="{Binding DataLoc}"></GridViewColumn>
+                                        <GridViewColumn Header="检测时间" Width="175" DisplayMemberBinding="{Binding CreateTime}"></GridViewColumn>
+                                    </GridView>
+                                </ListView.View>
+                            </ListView>
+
+                            <Button Content="返回上一级" HorizontalAlignment="Left" Margin="611,50,0,0" VerticalAlignment="Top" Grid.Row="1" Grid.Column="5"/>
                             <TextBlock HorizontalAlignment="Left" Margin="301,46,0,762" TextWrapping="Wrap" Grid.Column="5" Grid.RowSpan="2"><Run Language="zh-cn" Text="时间范围"/></TextBlock>
                             <TextBlock HorizontalAlignment="Left" Margin="441,12,0,737" TextWrapping="Wrap" Grid.Column="5" Grid.Row="1"><Run Language="zh-cn" Text="到"/></TextBlock>
                             <DatePicker Grid.Column="5" HorizontalAlignment="Left" Margin="301,9,0,0" Grid.Row="1" VerticalAlignment="Top" Width="135"/>
@@ -177,10 +226,14 @@
                             <Image Grid.Column="5" HorizontalAlignment="Left" Height="320" Margin="723,395,0,0" VerticalAlignment="Top" Width="320" Grid.Row="1" Source="sample_2d.jpg"/>
                             <TextBlock HorizontalAlignment="Left" Margin="729,372,0,377" TextWrapping="Wrap" Grid.Column="5" Grid.Row="1"><Run Language="zh-cn" Text="二维截面"/></TextBlock>
                             <ListBox Margin="1063,395,0,0" Height="320" VerticalAlignment="Top" HorizontalAlignment="Left" Width="173" Grid.Row="1" Grid.Column="5"/>
-                            <Button Content="前往下一级" HorizontalAlignment="Left" Margin="601,44,0,0" VerticalAlignment="Top" Grid.Row="1" Grid.Column="5"/>
+                            <Button Content="前往下一级" HorizontalAlignment="Left" Margin="611,74,0,0" VerticalAlignment="Top" Grid.Row="1" Grid.Column="5"/>
                             <Button Name="Clear_DebugList_Button" Content="清空" HorizontalAlignment="Left" Margin="608,583,0,0" VerticalAlignment="Top" Grid.Row="1" Width="69" Height="20" Grid.Column="5" Click="Clear_DebugList_Button_Click"/>
                             <Button x:Name="Data_Disk_Clear_Button" Content="清空" HorizontalAlignment="Right" Margin="0,311,1034,0" VerticalAlignment="Top" Grid.Row="1" Grid.Column="5" Width="39" Click="Data_Disk_Clear_Button_Click"/>
                             <Button x:Name="Scan_Data_Disk_Button" Content="扫描数据盘" HorizontalAlignment="Left" Margin="160,336,0,0" VerticalAlignment="Top" Grid.Row="1" Grid.Column="5" Width="84" Click="Scan_Data_Disk_Button_Click"/>
+                            <Button Name="Line_List_View_Button" Background="#FFDDDDDD" Content="线路表" HorizontalAlignment="Left" Margin="359,74,0,0" VerticalAlignment="Top" Grid.Row="1" Grid.Column="5" Width="50" Click="Line_List_View_Button_Click"/>
+                            <Button Name="Record_List_View_Button" Background="#AF535353" Content="记录表" HorizontalAlignment="Left" Margin="422,74,0,0" VerticalAlignment="Top" Grid.Row="1" Grid.Column="5" Width="50" Click="Record_List_View_Button_Click"/>
+                            <TextBlock HorizontalAlignment="Left" Margin="301,74,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="5" Grid.Row="1"><Run Language="zh-cn" Text="视图选择"/></TextBlock>
+                            <Button Name="Data_List_View_Button" Background="#FFDDDDDD" Content="数据表" HorizontalAlignment="Left" Margin="488,74,0,0" VerticalAlignment="Top" Grid.Row="1" Grid.Column="5" Width="50" Click="Data_List_View_Button_Click"/>
                         </Grid>
                     </TabItem>
                     <TabItem Header="数据概览">

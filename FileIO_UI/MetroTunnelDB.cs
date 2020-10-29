@@ -918,6 +918,30 @@ namespace libMetroTunnelDB
             DoDelete(deleteStr);
         }
 
+        public void QueryDetectRecord(ref List<DetectRecord> e)
+        {
+            String queryStr = "SELECT * FROM DetectRecord";
+            List<DetectRecord> arr = new List<DetectRecord>();
+            DoQuery(queryStr, ref arr, ReadDetectRecord);
+            e = arr;
+        }
+
+        public void QueryDetectRecord(ref List<DetectRecord> e, int LineID)
+        {
+            String queryStr = String.Format("SELECT * FROM DetectRecord WHERE LineID={0}", LineID);
+            List<DetectRecord> arr = new List<DetectRecord>();
+            DoQuery(queryStr, ref arr, ReadDetectRecord);
+            e = arr;
+        }
+
+        public void QueryDetectRecord(ref List<DetectRecord> e, DateTime start_time, DateTime stop_time)
+        {
+            String queryStr = String.Format("SELECT * FROM DetectRecord WHERE CreateTime>=\"{0}\" AND CreateTime<=\"{1}\"", start_time.ToString(), stop_time.ToString());
+            List<DetectRecord> arr = new List<DetectRecord>();
+            DoQuery(queryStr, ref arr, ReadDetectRecord);
+            e = arr;
+        }
+
         public void QueryDetectRecord(ref DetectRecord e, int RecordID)
         {
             String queryStr = String.Format("SELECT * FROM DetectRecord WHERE RecordID={0}", RecordID);

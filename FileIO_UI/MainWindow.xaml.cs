@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Windows;
+using System.Windows.Media;
 
 namespace FileIO_UI
 {
@@ -807,10 +808,100 @@ namespace FileIO_UI
             Release_MySQL();
         }
 
+        // Multi-view list manager
+        int list_index_status = 1; // indicator of view index: <=0 -> LineList, 1 -> RecordList(main view), >=2 -> DataList
 
+        // view button background
+        SolidColorBrush SelectedColor = new SolidColorBrush(System.Windows.Media.Color.FromArgb(0xAF, 0x53, 0x53, 0x53));
+        SolidColorBrush UnSelectedColor = new SolidColorBrush(System.Windows.Media.Color.FromArgb(0xFF, 0xDD, 0xDD, 0xDD));
+        public void ShowLineList()
+        {
+            Line_List.Visibility = System.Windows.Visibility.Visible;
+            Record_List.Visibility = System.Windows.Visibility.Hidden;
+            Data_List.Visibility = System.Windows.Visibility.Hidden;
+            list_index_status = 0;
+            Line_List_View_Button.Background = (System.Windows.Media.Brush)SelectedColor;
+            Record_List_View_Button.Background = (System.Windows.Media.Brush)UnSelectedColor;
+            Data_List_View_Button.Background = (System.Windows.Media.Brush)UnSelectedColor;
+            GetLineList();
+        }
+        public void ShowRecordList()
+        {
+            Record_List.Visibility = System.Windows.Visibility.Visible;
+            Line_List.Visibility = System.Windows.Visibility.Hidden;
+            Data_List.Visibility = System.Windows.Visibility.Hidden;
+            list_index_status = 1;
+            Line_List_View_Button.Background = (System.Windows.Media.Brush)UnSelectedColor;
+            Record_List_View_Button.Background = (System.Windows.Media.Brush)SelectedColor;
+            Data_List_View_Button.Background = (System.Windows.Media.Brush)UnSelectedColor;
+        }
+        public void ShowDataList()
+        {
+            Data_List.Visibility = System.Windows.Visibility.Visible;
+            Line_List.Visibility = System.Windows.Visibility.Hidden;
+            Record_List.Visibility = System.Windows.Visibility.Hidden;
+            list_index_status = 2;
+            Line_List_View_Button.Background = (System.Windows.Media.Brush)UnSelectedColor;
+            Record_List_View_Button.Background = (System.Windows.Media.Brush)UnSelectedColor;
+            Data_List_View_Button.Background = (System.Windows.Media.Brush)SelectedColor;
+        }
 
-        
+        private void GetLineList()
+        {
+            Thread get_line_list_thread = new Thread(GetLineList_t);
+            get_line_list_thread.Start();
+        }
 
+        private void GetLineList_t()
+        {
+            Wait_MySQL();
+            List<libMetroTunnelDB.Line> line = new List<libMetroTunnelDB.Line>();
+            Database.QueryLine(ref line);
+            Dispatcher.Invoke(new Action(() => { Line_List.Items.Clear(); }));
+            for (int i = 0; i < line.Count; i++)
+            {
+                Dispatcher.Invoke(new Action(() => { Line_List.Items.Add(
+                    new LineListItem(line[i].LineNumber, line[i].LineName, line[i].TotalMileage, line[i].CreateTime)); }));
+            }
+            Release_MySQL();
+        }
+
+        private void GetRecordList()
+        {
+
+        }
+        private void GetRecordList_t()
+        {
+            Wait_MySQL();
+            List<libMetroTunnelDB.DetectRecord> detectRecords = new List<DetectRecord>();
+            Database.QueryDetectRecord(ref detectRecords);
+            Release_MySQL();
+        }
+
+        public void ShowViewByIndex(int view_index)
+        {
+            if (view_index <= 0)
+                ShowLineList();
+            else if (view_index == 1)
+                ShowRecordList();
+            else if (view_index >= 2)
+                ShowDataList();
+        }
+
+        private void Line_List_View_Button_Click(object sender, RoutedEventArgs e)
+        {
+            ShowLineList();
+        }
+
+        private void Record_List_View_Button_Click(object sender, RoutedEventArgs e)
+        {
+            ShowRecordList();
+        }
+
+        private void Data_List_View_Button_Click(object sender, RoutedEventArgs e)
+        {
+            ShowDataList();
+        }
     }
 
     // ListView binding class
@@ -899,5 +990,53 @@ namespace FileIO_UI
         }
     }
 
+    // Multi-list view
+    class LineListItem
+    {
+        public String LineNum { set; get; }
+        public String LineName { set; get; }
+        public String TotalMileage { set; get; }
+        public String CreateTime { set; get; }
+        public LineListItem(String _LineNum, String _LineName, float _TotalMileage, DateTime _CreateTime)
+        {
+            LineNum = _LineNum;
+            LineName = _LineName;
+            TotalMileage = _TotalMileage.ToString();
+            CreateTime = _CreateTime.ToString();
+        }
+    }
+
+    class RecordListItem
+    {
+        public String RecordNum { set; get; }
+        public String LineNum { set; get; }
+        public String CreateTime { set; get; }
+        public String DetectDistance { set; get; }
+        public String StartLoc { set; get; }
+        public String StopLoc { set; get; }
+        public String DeviceNum { set; get; }
+        public RecordListItem(String _RecordNum, String _LineNum, DateTime _CreateTime,
+            float _DetectDistance, float _StartLoc, float _StopLoc, String _DeviceNum)
+        {
+            RecordNum = _RecordNum;
+            LineNum = _LineNum;
+            CreateTime = _CreateTime.ToString();
+            DetectDistance = _DetectDistance.ToString();
+            StartLoc = _StartLoc.ToString();
+            StopLoc = _StopLoc.ToString();
+            DeviceNum = _DeviceNum;
+        }
+    }
+
+    class DataListItem
+    {
+        public String DataLoc { set; get; }
+        public String CreateTime { set; get; }
+        public DataListItem(double _DataLoc, DateTime _CreateTime)
+        {
+            DataLoc = _DataLoc.ToString();
+            CreateTime = _CreateTime.ToString();
+        }
+    }
 
 }
