@@ -1186,6 +1186,7 @@ namespace libMetroTunnelDB
                     }
 
                     mw.DebugReWriteLine("合并数据分组 " + query_count + ": " + i + "/" + base_raw.Count + "...");
+                    mw.SubProcessReport(i + (query_count - 1) * query_max);
                     //Console.Write("\r----->Merging..... " + i + "/" + base_raw.Count + " lines");
 
                     // Convert x, y to s, a
@@ -1323,6 +1324,7 @@ namespace libMetroTunnelDB
                     }
 
                     mw.DebugReWriteLine("合并视频序列分组 " + query_count + ": " + i + "/" + base_raw.Count + "...");
+                    mw.SubProcessReport(i + (query_count - 1) * query_max);
 
                     // Save info and Send to MySQL
                     for (int j = 0; j < cam_alive.Count; j++)

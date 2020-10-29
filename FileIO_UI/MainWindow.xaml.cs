@@ -27,6 +27,7 @@ namespace FileIO_UI
         public MainWindow()
         {
             InitializeComponent();
+            this.Closing += Window_Closing;
 
             // Initialize
             DataAnalyze.DataAnalyzeInit(Database, this);
@@ -40,6 +41,23 @@ namespace FileIO_UI
             //DateTime dateTime = DateTime.Now;
             //LineInfoList.Items.Add(new LineInfo("1", "111", Convert.ToSingle(234.5), dateTime));
 
+        }
+
+        // Window closing warning
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if(!MySQL_is_valid())
+            {
+                if (MessageBox.Show("任务正在进行，关闭窗口将导致数据丢失", "确认", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                {
+                    e.Cancel = false;
+                }
+                else
+                {
+                    e.Cancel = true;
+                }
+            }
+            
         }
 
         // UI Refresh
@@ -170,35 +188,35 @@ namespace FileIO_UI
         {
             if (stage_finished_percent.Count < 1 || stage_num < 1 || stage_num >= stage_finished_percent.Count)
                 return;
-            if (_stage_num > 0 || _stage_num < stage_finished_percent.Count)
+            if (_stage_num > 0 && _stage_num < stage_finished_percent.Count)
                 stage_num = _stage_num;
-            int process_finished_now = (int)(100 * (process_num - 1) / same_process_num + 
+            float process_finished_now = (float)(100 * (process_num - 1) / same_process_num + 
                 (stage_finished_percent[stage_num - 1] + (stage_finished_percent[stage_num] - stage_finished_percent[stage_num - 1]) * Math.Min((float)task_finished_now / task_sum, 1)) / same_process_num);
-            int stage_finished_now = (int)Math.Min((float)task_finished_now / task_sum, 1);
+            float stage_finished_now = Math.Min((float)task_finished_now / task_sum, 1) * 100;
             if (process_finished_now > 100)
-                return;
+                process_finished_now = 100;
             MainProcessBarSet(process_finished_now);
             if (stage_finished_now > 100)
-                return;
+                stage_finished_now = 100;
             SubProcessBarSet(stage_finished_now);
             if(stage_name != null)
                 Dispatcher.Invoke(new Action(() => { SubPBarInfo.Text = stage_name; }));            
         }
         public void MainProcessFinished(int process_num)
         {
-            int process_finished_now = 100 * (process_num) / same_process_num;
+            float process_finished_now = 100 * (float)(process_num) / same_process_num;
             if (process_finished_now > 100)
-                return;
+                process_finished_now = 100;
             MainProcessBarSet(process_finished_now);
         }
         public void SubProcessFinished(int stage_num)
         {
             if (stage_finished_percent.Count < 1 || stage_num < 1 || stage_num >= stage_finished_percent.Count)
                 return;
-            int process_finished_now = 100 * (process_num - 1) / same_process_num + stage_finished_percent[stage_num] / same_process_num;
+            float process_finished_now = 100 * (float)(process_num - 1) / same_process_num + stage_finished_percent[stage_num] / same_process_num;
             int stage_finished_now = 100;
             if (process_finished_now > 100)
-                return;
+                process_finished_now = 100;
             MainProcessBarSet(process_finished_now);
             SubProcessBarSet(stage_finished_now);
         }
@@ -220,10 +238,10 @@ namespace FileIO_UI
             return true;
         }
 
-        public void MainProcessBarSet(int percentage)
+        public void MainProcessBarSet(float percentage)
         {
             Dispatcher.Invoke(new Action(() => { MainPbar.Value = percentage; }));
-            Dispatcher.Invoke(new Action(() => { MainPercentage.Text = percentage.ToString(); }));
+            Dispatcher.Invoke(new Action(() => { MainPercentage.Text = percentage.ToString("0.#"); }));
         }
 
         public void MainProcessBarReset()
@@ -232,10 +250,10 @@ namespace FileIO_UI
             Dispatcher.Invoke(new Action(() => { MainPercentage.Text = "0"; }));
         }
 
-        public void SubProcessBarSet(int percentage)
+        public void SubProcessBarSet(float percentage)
         {
             Dispatcher.Invoke(new Action(() => { SubPbar.Value = percentage; }));
-            Dispatcher.Invoke(new Action(() => { SubPbarText.Text = percentage.ToString(); }));
+            Dispatcher.Invoke(new Action(() => { SubPbarText.Text = percentage.ToString("0.#"); }));
         }
 
         public void SubProcessBarReset()
@@ -636,7 +654,7 @@ namespace FileIO_UI
             }
         }
 
-        
+        public int line_counter = 1;
 
         private void Analyze_All_Button_Click_t()
         {
@@ -670,6 +688,12 @@ namespace FileIO_UI
 
                 DataRecord dataRecord = record_dict[Convert.ToDateTime(selected_data_record[i].CreateTime)];
 
+                // Process Management Design --------------------------------------------------------
+                // Step 1 : Data CSV reading-------------------------------------- 25% for all cameras
+                // Step 2 : Save Timestamp and Decode mjpeg----------------------- 45% for all cameras
+                // Step 3 : Merge data from all cameras--------------------------- 15%
+                // Step 4 : Merge mjpeg timestamp from all cameras---------------- 15%
+
                 if(isFirstDataRecord)
                 {
                     List<int> stage_percent = new List<int>();
@@ -678,10 +702,10 @@ namespace FileIO_UI
                     {
                         // CSV read
                         stage_percent.Add(stage_percent[stage_percent.Count - 1] + 25 / dataRecord.DataDiskDirList.Count);
-                        // Save timestamp
-                        stage_percent.Add(stage_percent[stage_percent.Count - 1] + 20 / dataRecord.DataDiskDirList.Count);
+                        // Save timestamp and Decode
+                        stage_percent.Add(stage_percent[stage_percent.Count - 1] + 45 / dataRecord.DataDiskDirList.Count);
                         // Decode
-                        stage_percent.Add(stage_percent[stage_percent.Count - 1] + 25 / dataRecord.DataDiskDirList.Count);
+                        // stage_percent.Add(stage_percent[stage_percent.Count - 1] + 25 / dataRecord.DataDiskDirList.Count);
                     }
                     stage_percent.Add(stage_percent[stage_percent.Count - 1] + 15);
                     stage_percent.Add(100);
@@ -695,11 +719,14 @@ namespace FileIO_UI
                     DetectRecordSelect.device.DetectDeviceNumber, DetectRecordSelect.Detect_Distance, DetectRecordSelect.Start_Loc, DetectRecordSelect.Stop_Loc, record_id_max));
                 
                 DebugWriteLine("扫描 " + dataRecord.CreateTime + " 文件...(" + query_num + "/" + query_all + ")");
-                
+
+                int line_sum = 0, enc_line_sum = 0;
+                int stage_counter = 1;
+
                 for (int j = 0; j < dataRecord.DataDiskDirList.Count; j++)
                 {
                     DebugWriteLine("开始分析 " + dataRecord.DataDiskDirList[j] + "...");
-                    int stage_counter = 1;
+        
                     //DataAnalyze.ScanFolder(dataRecord.DataDiskDirList[j], record_id_max);
                     string CalResFolder = dataRecord.DataDiskDirList[j] + "\\CalResult";
                     string EncodeFolder = dataRecord.DataDiskDirList[j];
@@ -711,21 +738,55 @@ namespace FileIO_UI
                         DebugWriteLine("未发现数据文件");
                         return;
                     }
-                    DebugWriteLine("扫描数据文件" + Filelist[i].text + "...");
-                    string csvpath = CalResFolder + "\\" + Filelist[i].text;
-                    int line_sum = CSVHandler.GetLineCount(csvpath, this);                   
+                    DebugWriteLine("扫描数据文件" + Filelist[0].text + "...");
+                    line_counter = 1;
+                    string csvpath = CalResFolder + "\\" + Filelist[0].text;
+                    line_sum = CSVHandler.GetLineCount(csvpath, this);                   
                     DebugReWriteLine("扫描数据文件" + "完成");
-                    MainProcessReport("分析数据 " + dataRecord.DataDiskDirList[j], (int)(line_sum * 1.01), i + 1, stage_counter++);
+
+                    MainProcessReport("分析数据 " + dataRecord.DataDiskDirList[j], (int)(line_sum * 8.1), i + 1, stage_counter);
                     DataAnalyze.ScanCalResult(CalResFolder, record_id_max);
+                    SubProcessFinished(stage_counter++);
+                    // MainProcessFinished(i + 1);
+
+                    // Scan a timestamp csvfile for line counting
+                    string EncodeResult = EncodeFolder + "\\EncodeResult";
+                    List<FileNames> EncFilelist = new List<FileNames>();
+                    GetSystemAllPath.GetallDirectory(EncFilelist, EncodeResult);
+                    if(EncFilelist.Count() < 1)
+                    {
+                        DebugWriteLine("未发现视频文件");
+                        return;
+                    }
+                    DebugWriteLine("扫描视频文件" + EncFilelist[0].text + "...");
+                    string mjpeg_csv_path = EncodeResult + "\\" + EncFilelist[0].text + "\\" + EncFilelist[0].children[1].text;
+                    enc_line_sum = CSVHandler.GetLineCount(mjpeg_csv_path, this);
+                    // Get mjpeg folder size
+                    int mjpeg_size = (int)(GetSystemAllPath.GetDirectorySize(EncodeResult)/1000);
+                    int jpeg_size_est = mjpeg_size * 2;
+
+                    MainProcessReport("解析视频" + dataRecord.DataDiskDirList[j], (int)(enc_line_sum * 8.1) + jpeg_size_est, i + 1, stage_counter);
+                    line_counter = 1;
                     DataAnalyze.ScanEncodeResult(EncodeFolder, record_id_max);
+                    SubProcessFinished(stage_counter++);
+                    // MainProcessFinished(i + 1);
+
                     DebugWriteLine("分析完成 " + dataRecord.DataDiskDirList[j]);
                 }
+                MainProcessReport("合并数据", line_sum, i + 1, stage_counter);
                 DataAnalyze.MergeCalResult(record_id_max);
+                SubProcessFinished(stage_counter++);
+
+                MainProcessReport("合并图像", enc_line_sum, i + 1, stage_counter);
                 DataAnalyze.MergeEncodeResult(record_id_max);
+                SubProcessFinished(stage_counter++);
+
                 query_num++;
                 record_id_max++;
+
+
             }
-            
+
             //foreach (DataRecord dataRecord in record_dict.Values)
             //{
             //    // Create DetectRecord
@@ -742,8 +803,11 @@ namespace FileIO_UI
             //    query_num++;
             //    record_id_max++;
             //}
+            DebugWriteLine("全部导入成功");
             Release_MySQL();
         }
+
+
 
         
 

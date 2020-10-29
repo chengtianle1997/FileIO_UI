@@ -88,7 +88,7 @@ namespace FileIO
                 // Get ImageRaw
                 String image_url = mjpeg_root_path + "\\f" + mjpegTimeStamp.FrameNum.ToString() + ".jpg";
                 ImageRaw imageRaw = new ImageRaw(record_id, mjpegTimeStamp.Timestamp, cam_num, image_url);
-
+                mw.SubProcessReport(mw.line_counter++);
                 // Insert into database
                 database.InsertIntoImageRaw(imageRaw);
             }
@@ -106,6 +106,7 @@ namespace FileIO
             string[] tablehead = null;
             int columncount = 0;
             bool isfirst = true;
+            int linecount = 1;
 
             while((strline = sr.ReadLine())!=null)
             {
@@ -230,6 +231,9 @@ namespace FileIO
                 {
                     Console.WriteLine("Insert MySQL Failed !!! \n");
                 }
+
+                mw.SubProcessReport(mw.line_counter++);
+                
             }
         }
 
@@ -244,7 +248,7 @@ namespace FileIO
             while ((strline = sr.ReadLine()) != null)
             {
                 line_counter++;
-                mw.DebugReWriteLine("扫描数据文件: 已发现" + line_counter +"条数据");
+                mw.DebugReWriteLine("扫描文件: 已发现" + line_counter +"条数据");
             }
 
             return line_counter;
