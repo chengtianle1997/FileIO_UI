@@ -814,52 +814,66 @@ namespace FileIO_UI
         // Multi-view list manager
         int list_index_status = 1; // indicator of view index: <=0 -> LineList, 1 -> RecordList(main view), >=2 -> DataList
         DateTime start_date = new DateTime(), end_date = new DateTime(), null_date = new DateTime(); // date choice
+        LineListItem selected_line = null;
+        RecordListItem selected_record = null;
+        DataListItem selected_data = null;
+        int maxQuery = 200;
+        int QueryFrom = 0;
 
         // view button background
         SolidColorBrush SelectedColor = new SolidColorBrush(System.Windows.Media.Color.FromArgb(0xAF, 0x53, 0x53, 0x53));
         SolidColorBrush UnSelectedColor = new SolidColorBrush(System.Windows.Media.Color.FromArgb(0xFF, 0xDD, 0xDD, 0xDD));
         public void ShowLineList()
         {
-            Line_List.Visibility = System.Windows.Visibility.Visible;
-            Record_List.Visibility = System.Windows.Visibility.Hidden;
-            Data_List.Visibility = System.Windows.Visibility.Hidden;
+            Dispatcher.Invoke(new Action(() =>
+            {
+                Line_List.Visibility = System.Windows.Visibility.Visible;
+                Record_List.Visibility = System.Windows.Visibility.Hidden;
+                Data_List.Visibility = System.Windows.Visibility.Hidden;
+
+                Line_List_View_Button.Background = (System.Windows.Media.Brush)SelectedColor;
+                Record_List_View_Button.Background = (System.Windows.Media.Brush)UnSelectedColor;
+                Data_List_View_Button.Background = (System.Windows.Media.Brush)UnSelectedColor;
+
+            }));
             
-            Line_List_View_Button.Background = (System.Windows.Media.Brush)SelectedColor;
-            Record_List_View_Button.Background = (System.Windows.Media.Brush)UnSelectedColor;
-            Data_List_View_Button.Background = (System.Windows.Media.Brush)UnSelectedColor;
-
             list_index_status = 0;
-
             GetLineList();
         }
         public void ShowRecordList()
         {
-            Record_List.Visibility = System.Windows.Visibility.Visible;
-            Line_List.Visibility = System.Windows.Visibility.Hidden;
-            Data_List.Visibility = System.Windows.Visibility.Hidden;
-            
-            Line_List_View_Button.Background = (System.Windows.Media.Brush)UnSelectedColor;
-            Record_List_View_Button.Background = (System.Windows.Media.Brush)SelectedColor;
-            Data_List_View_Button.Background = (System.Windows.Media.Brush)UnSelectedColor;
+            Dispatcher.Invoke(new Action(() =>
+            {
+                Record_List.Visibility = System.Windows.Visibility.Visible;
+                Line_List.Visibility = System.Windows.Visibility.Hidden;
+                Data_List.Visibility = System.Windows.Visibility.Hidden;
+
+                Line_List_View_Button.Background = (System.Windows.Media.Brush)UnSelectedColor;
+                Record_List_View_Button.Background = (System.Windows.Media.Brush)SelectedColor;
+                Data_List_View_Button.Background = (System.Windows.Media.Brush)UnSelectedColor;
+            }));
 
             list_index_status = 1;
-
             GetRecordList();
         }
         public void ShowDataList()
         {
-            Data_List.Visibility = System.Windows.Visibility.Visible;
-            Line_List.Visibility = System.Windows.Visibility.Hidden;
-            Record_List.Visibility = System.Windows.Visibility.Hidden;
-            
-            Line_List_View_Button.Background = (System.Windows.Media.Brush)UnSelectedColor;
-            Record_List_View_Button.Background = (System.Windows.Media.Brush)UnSelectedColor;
-            Data_List_View_Button.Background = (System.Windows.Media.Brush)SelectedColor;
+            Dispatcher.Invoke(new Action(() =>
+            {
+                Data_List.Visibility = System.Windows.Visibility.Visible;
+                Line_List.Visibility = System.Windows.Visibility.Hidden;
+                Record_List.Visibility = System.Windows.Visibility.Hidden;
+
+                Line_List_View_Button.Background = (System.Windows.Media.Brush)UnSelectedColor;
+                Record_List_View_Button.Background = (System.Windows.Media.Brush)UnSelectedColor;
+                Data_List_View_Button.Background = (System.Windows.Media.Brush)SelectedColor;
+            }));
 
             list_index_status = 2;
+            GetDataList();
         }
 
-        private void GetLineList()
+        public void GetLineList()
         {
             Thread get_line_list_thread = new Thread(GetLineList_t);
             get_line_list_thread.Start();
@@ -869,8 +883,16 @@ namespace FileIO_UI
         {
             Wait_MySQL();
             List<libMetroTunnelDB.Line> line = new List<libMetroTunnelDB.Line>();
-            Database.QueryLine(ref line);
             Dispatcher.Invoke(new Action(() => { Line_List.Items.Clear(); }));
+            try
+            {
+                Database.QueryLine(ref line);  
+            }
+            catch(SystemException)
+            {
+                Release_MySQL();
+                return;
+            }
             for (int i = 0; i < line.Count; i++)
             {
                 Dispatcher.Invoke(new Action(() => { Line_List.Items.Add(
@@ -879,7 +901,7 @@ namespace FileIO_UI
             Release_MySQL();
         }
 
-        private void GetRecordList()
+        public void GetRecordList()
         {
             Thread get_detect_record_thread = new Thread(GetRecordList_t);
             get_detect_record_thread.Start();
@@ -888,18 +910,138 @@ namespace FileIO_UI
         {
             Wait_MySQL();
             List<libMetroTunnelDB.DetectRecord> detectRecords = new List<DetectRecord>();
-            Database.QueryDetectRecord(ref detectRecords);
             Dispatcher.Invoke(new Action(() => { Record_List.Items.Clear(); }));
+            try
+            {
+                if (selected_line == null)
+                {
+                    if (start_date == null || end_date == null)
+                    {
+                        Database.QueryDetectRecord(ref detectRecords);
+                    }
+                    else
+                    {
+                        Database.QueryDetectRecord(ref detectRecords, start_date, end_date);
+                    }
+                }
+                else
+                {
+                    List<libMetroTunnelDB.Line> select_line_list = new List<libMetroTunnelDB.Line>();
+                    Database.QueryLine(ref select_line_list, selected_line.LineNum);
+                    int selected_line_id = (int)select_line_list[0].LineID;
+                    if (start_date == null || end_date == null)
+                    {
+                        Database.QueryDetectRecord(ref detectRecords, selected_line_id);
+                    }
+                    else
+                    {
+                        Database.QueryDetectRecord(ref detectRecords, selected_line_id, start_date, end_date);
+                    }
+                }
+            }
+            catch(SystemException)
+            {
+                Release_MySQL();
+                return;
+            }
+            
             for (int i = 0; i < detectRecords.Count; i++)
             {
                 libMetroTunnelDB.Line detect_line = null;
-                Database.QueryLine(ref detect_line, detectRecords[i].LineID);
                 libMetroTunnelDB.DetectDevice detect_device = null;
-                Database.QueryDetectDevice(ref detect_device, detectRecords[i].DeviceID);
+                try
+                {                   
+                    Database.QueryLine(ref detect_line, detectRecords[i].LineID);                    
+                    Database.QueryDetectDevice(ref detect_device, detectRecords[i].DeviceID);
+                }
+                catch(SystemException)
+                {
+                    continue;
+                }
                 Dispatcher.Invoke(new Action(() => { Record_List.Items.Add(
                     new RecordListItem(detectRecords[i].RecordID.ToString(), detect_line.LineName, 
                     detectRecords[i].DetectTime, detectRecords[i].Length, detectRecords[i].Start_Loc, detectRecords[i].Stop_Loc, detect_device.DetectDeviceName)); }));
             }
+            Release_MySQL();
+        }
+        public void GetDataList()
+        {
+            Thread get_data_list_thread = new Thread(GetDataList_t);
+            get_data_list_thread.Start();
+        }
+
+        private void GetDataList_t()
+        {
+            Wait_MySQL();
+            List<libMetroTunnelDB.DataConv> datas = new List<DataConv>();
+            if (selected_record == null)
+                return;
+            QueryFrom = 0;
+            Dispatcher.Invoke(new Action(() =>
+            {
+                Data_List.Items.Clear();
+            }));
+            try
+            {
+                Database.QueryDataConv(ref datas, Convert.ToInt32(selected_record.RecordNum), QueryFrom, maxQuery);
+                QueryFrom += maxQuery;
+            }
+            catch(SystemException)
+            {
+                Release_MySQL();
+                return;
+            }                       
+            for (int i = 0; i < datas.Count; i++)
+            {
+                Dispatcher.Invoke(new Action(() =>
+                {
+                    Data_List.Items.Add(new DataListItem(datas[i].Distance, 0, 0, 0, 0, false, false));
+                }));
+            }
+            Dispatcher.Invoke(new Action(() =>
+            {
+                Data_List.Items.Add(new DataListItem("..."));
+            }));
+            Release_MySQL();
+        }
+
+        public void GetMoreData()
+        {
+            Thread get_more_data_thread = new Thread(GetMoreData_t);
+            get_more_data_thread.Start();
+        }
+
+        private void GetMoreData_t()
+        {
+            Wait_MySQL();
+            List<libMetroTunnelDB.DataConv> datas = new List<DataConv>();
+            if (selected_record == null)
+                return;
+            try
+            {
+                Database.QueryDataConv(ref datas, Convert.ToInt32(selected_record.RecordNum), QueryFrom, maxQuery);
+                QueryFrom += maxQuery;
+            }
+            catch (SystemException)
+            {
+                Release_MySQL();
+                return;
+            }
+            Dispatcher.Invoke(new Action(() =>
+            {
+                Data_List.Items.RemoveAt(Data_List.Items.Count - 1);
+            }));
+            for (int i = 0; i < datas.Count; i++)
+            {
+                Dispatcher.Invoke(new Action(() =>
+                {
+                    Data_List.Items.Add(new DataListItem(datas[i].Distance, 0, 0, 0, 0, false, false));
+                }));
+            }
+            Dispatcher.Invoke(new Action(() =>
+            {
+                Data_List.Items.Add(new DataListItem("..."));
+            }));
             Release_MySQL();
         }
 
@@ -937,6 +1079,7 @@ namespace FileIO_UI
         {
             try
             {
+                Wait_MySQL();
                 Database.GetMaxMinDetectRecordTime(ref start_date, ref end_date);
                 Dispatcher.Invoke(new Action(() =>
                {
@@ -947,10 +1090,81 @@ namespace FileIO_UI
                    Start_Date_Picker.SelectedDate = start_date;
                    End_Date_Picker.SelectedDate = end_date;
                }));
+                selected_line = null;
+                selected_record = null;
+                selected_data = null;
+                RefreshSelectedConditionText();
+                Release_MySQL();
             }
             catch(System.Exception)
             {
-                ;
+                Release_MySQL();
+            }
+            
+        }
+
+        private void Start_Date_Picker_Changed(object sender, RoutedEventArgs e)
+        {
+            start_date = (DateTime)Start_Date_Picker.SelectedDate;
+        }
+
+        private void End_Date_Picker_Changed(object sender, RoutedEventArgs e)
+        {
+            end_date = ((DateTime)End_Date_Picker.SelectedDate).AddDays(1);
+        }
+
+        private void Search_Record_Button_Click(object sender, RoutedEventArgs e)
+        {
+            ShowRecordList();
+        }
+
+        public void RefreshSelectedConditionText()
+        {
+            String text_str = "当前选项: ";
+            if (selected_line != null)
+            {
+                text_str += selected_line.LineName;
+            }
+            if (selected_record != null)
+            {
+                text_str += "  " + selected_record.CreateTime;
+            }
+            if (selected_data != null)
+            {
+                text_str += "  " + selected_data.DataLoc;
+            }
+
+            Dispatcher.Invoke(new Action(() =>
+            {
+                Selected_Condition_Text.Text = text_str;
+            }));
+        }
+
+        private void Line_List_Item_DoubleClick(object sender, RoutedEventArgs e)
+        {
+            selected_line = Line_List.SelectedItem as LineListItem;
+            RefreshSelectedConditionText();
+            ShowRecordList();
+        }
+
+        private void Record_List_Item_DoubleClick(object sender, RoutedEventArgs e)
+        {
+            selected_record = Record_List.SelectedItem as RecordListItem;
+            RefreshSelectedConditionText();
+            ShowDataList();
+        }
+
+        private void Data_List_Item_DoubleClick(object sender, RoutedEventArgs e)
+        {
+            selected_data = Data_List.SelectedItem as DataListItem;
+            if (selected_data.DataLoc == "...")
+            {
+                GetMoreData();
+            }
+            else
+            {
+                RefreshSelectedConditionText();
+                // visualize info
             }
             
         }
@@ -1086,11 +1300,27 @@ namespace FileIO_UI
     class DataListItem
     {
         public String DataLoc { set; get; }
-        public String CreateTime { set; get; }
-        public DataListItem(double _DataLoc, DateTime _CreateTime)
+        public String LongAxis { set; get; }
+        public String ShortAxis { set; get; }
+        public String HorizontalAxis { set; get; }
+        public String Rotation { set; get; }
+        public String Constriction { set; get; }
+        public String Crack { set; get; }
+        public DataListItem(double _DataLoc, float _LongAxis, float _ShortAxis, float _HorizontalAxis, float _Rotation, bool _Constriction, bool _Crack)
         {
             DataLoc = _DataLoc.ToString();
-            CreateTime = _CreateTime.ToString();
+            LongAxis = _LongAxis.ToString("0.#");
+            ShortAxis = _ShortAxis.ToString("0.#");
+            HorizontalAxis = _HorizontalAxis.ToString("0.#");
+            Rotation = _Rotation.ToString("0.##");
+            Constriction = _Constriction.ToString();
+            Crack = _Crack.ToString();
+        }
+
+        public DataListItem(String text)
+        {
+            DataLoc = text;
+            LongAxis = text;
         }
     }
 

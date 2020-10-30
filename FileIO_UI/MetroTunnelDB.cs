@@ -964,7 +964,16 @@ namespace libMetroTunnelDB
 
         public void QueryDetectRecord(ref List<DetectRecord> e, DateTime start_time, DateTime stop_time)
         {
-            String queryStr = String.Format("SELECT * FROM DetectRecord WHERE CreateTime>=\"{0}\" AND CreateTime<=\"{1}\"", start_time.ToString(), stop_time.ToString());
+            String queryStr = String.Format("SELECT * FROM DetectRecord WHERE DetectTime>=\"{0}\" AND DetectTime<=\"{1}\"", start_time.ToString(), stop_time.ToString());
+            List<DetectRecord> arr = new List<DetectRecord>();
+            DoQuery(queryStr, ref arr, ReadDetectRecord);
+            e = arr;
+        }
+
+        public void QueryDetectRecord(ref List<DetectRecord> e, int LineID, DateTime start_time, DateTime stop_time)
+        {
+            String queryStr = String.Format("SELECT * FROM DetectRecord WHERE LineID={0} AND DetectTime>=\"{1}\" AND DetectTime<=\"{2}\"", 
+                LineID, start_time.ToString(), stop_time.ToString());
             List<DetectRecord> arr = new List<DetectRecord>();
             DoQuery(queryStr, ref arr, ReadDetectRecord);
             e = arr;
@@ -1051,6 +1060,14 @@ namespace libMetroTunnelDB
             String queryStr = String.Format(formatStr, min_RecordID, max_RecordID, min_Distance, max_Distance);
             DoQuery(queryStr, ref arr, ReadDataConv);
         }
+
+        public void QueryDataConv(ref List<DataConv> arr, int RecordID, int QueryFrom, int maxQuery, float min_Distance = 0, float max_Distance = float.MaxValue)
+        {
+            String formatStr = "SELECT * FROM DataConv WHERE RecordID={0} AND Distance>={1} AND Distance<={2} LIMIT {3},{4}";
+            String queryStr = String.Format(formatStr, RecordID, min_Distance, max_Distance, QueryFrom, maxQuery);
+            DoQuery(queryStr, ref arr, ReadDataConv);
+        }
+
 
         public void QueryDataDisp(ref List<DataDisp> arr, int RecordID, float min_Distance = 0, float max_Distance = float.MaxValue)
         {
