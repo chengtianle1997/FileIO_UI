@@ -252,7 +252,7 @@ namespace FileIO
             
             while(threadControlCounter < Filelist.Count())
             {
-                int task_now = (int)(GetSystemAllPath.GetDirectorySize(filepath + "\\DecodeResult")/1000);
+                int task_now = (int)(GetSystemAllPath.GetDirectorySize(filepath + "\\DecodeResult")/1000000);
                 mw.SubProcessReport(task_now + mw.line_counter);
                 Thread.Sleep(100);
             }

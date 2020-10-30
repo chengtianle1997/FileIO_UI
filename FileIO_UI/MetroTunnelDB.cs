@@ -774,6 +774,18 @@ namespace libMetroTunnelDB
             return RecordID;
         }
 
+        protected DateTime ReadMinDetectRecordTime(MySqlDataReader reader)
+        {
+            DateTime CreateTime = reader.GetDateTime("MIN(DetectTime)");
+            return CreateTime;
+        }
+
+        protected DateTime ReadMaxDetectRecordTime(MySqlDataReader reader)
+        {
+            DateTime CreateTime = reader.GetDateTime("MAX(DetectTime)");
+            return CreateTime;
+        }
+
         protected DataOverview ReadDataOverview(MySqlDataReader reader)
         {
             DataOverview entry = new DataOverview
@@ -882,6 +894,14 @@ namespace libMetroTunnelDB
             e = arr;
         }
 
+        public void QueryLine(ref Line e, int LineID)
+        {
+            String queryStr = String.Format("SELECT * FROM Line WHERE LineID={0}", LineID);
+            List<Line> arr = new List<Line>();
+            DoQuery(queryStr, ref arr, ReadLine);
+            e = arr[0];
+        }
+
         public void QueryLine(ref List<Line> e)
         {
             String queryStr = "SELECT * FROM Line";
@@ -902,6 +922,14 @@ namespace libMetroTunnelDB
             List<DetectDevice> arr = new List<DetectDevice>();
             DoQuery(queryStr, ref arr, ReadDetectDevice);
             e = arr;
+        }
+
+        public void QueryDetectDevice(ref DetectDevice e, String DetectDeviceID)
+        {
+            String queryStr = String.Format("SELECT * FROM DetectDevice WHERE DetectDeviceID={0}", DetectDeviceID);
+            List<DetectDevice> arr = new List<DetectDevice>();
+            DoQuery(queryStr, ref arr, ReadDetectDevice);
+            e = arr[0];
         }
 
         public void QueryDetectDevice(ref List<DetectDevice> e)
@@ -948,7 +976,7 @@ namespace libMetroTunnelDB
             List<DetectRecord> arr = new List<DetectRecord>();
             DoQuery(queryStr, ref arr, ReadDetectRecord);
             e = arr[0];
-        }
+        }   
 
         public void QueryDetectRecord(ref DetectRecord e, String CreateTime)
         {
@@ -969,6 +997,18 @@ namespace libMetroTunnelDB
             List<int> record_ids = new List<int>();
             DoQuery(queryStr, ref record_ids, ReadMaxDetectRecordID);
             record_id = record_ids[0];
+        }
+
+        public void GetMaxMinDetectRecordTime(ref DateTime start_time, ref DateTime stop_time)
+        {
+            String queryStrMin = "SELECT MIN(DetectTime) FROM DetectRecord";
+            String queryStrMax = "SELECT MAX(DetectTime) FROM DetectRecord";
+            List<DateTime> dateTimes_min = new List<DateTime>();
+            List<DateTime> dateTimes_max = new List<DateTime>();
+            DoQuery(queryStrMin, ref dateTimes_min, ReadMinDetectRecordTime);
+            DoQuery(queryStrMax, ref dateTimes_max, ReadMaxDetectRecordTime);
+            start_time = dateTimes_min[0];
+            stop_time = dateTimes_max[0];
         }
 
         public void QueryDataOverview(ref List<DataOverview> arr, int RecordID, float min_Distance = 0, float max_Distance = float.MaxValue)
