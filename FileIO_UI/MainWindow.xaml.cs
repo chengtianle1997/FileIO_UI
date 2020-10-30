@@ -521,11 +521,11 @@ namespace FileIO_UI
                     // Decide the unit (M or G)
                     if(file_size > 1024)
                     {
-                        dataRecord.DataSize = ((float)(file_size / 1024)).ToString() + "G";
+                        dataRecord.DataSize = ((float)(file_size / 1024)).ToString("0.#") + "G";
                     }
                     else
                     {
-                        dataRecord.DataSize = file_size.ToString() + "M";
+                        dataRecord.DataSize = file_size.ToString("0.#") + "M";
                     }                    
                     Dispatcher.Invoke(new Action(() => { Data_Record_List.Items.Add(dataRecord); }));
                     dict_counter++;
@@ -748,7 +748,7 @@ namespace FileIO_UI
                     line_sum = CSVHandler.GetLineCount(csvpath, this);                   
                     DebugReWriteLine("扫描数据文件" + "完成");
 
-                    MainProcessReport("分析数据 " + dataRecord.DataDiskDirList[j], (int)(line_sum * 8.1), i + 1, stage_counter);
+                    MainProcessReport("分析数据", (int)(line_sum * 8.1), i + 1, stage_counter);
                     DataAnalyze.ScanCalResult(CalResFolder, record_id_max);
                     SubProcessFinished(stage_counter++);
                     // MainProcessFinished(i + 1);
