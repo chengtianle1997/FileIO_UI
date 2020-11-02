@@ -257,7 +257,7 @@ namespace FileIO_UI
         public void SubProcessBarSet(float percentage)
         {
             Dispatcher.Invoke(new Action(() => { SubPbar.Value = percentage; }));
-            Dispatcher.Invoke(new Action(() => { SubPbarText.Text = percentage.ToString("0.#"); }));
+            Dispatcher.Invoke(new Action(() => { SubPbarText.Text = percentage.ToString("0.##"); }));
         }
 
         public void SubProcessBarReset()
@@ -1164,12 +1164,88 @@ namespace FileIO_UI
             else
             {
                 RefreshSelectedConditionText();
+                if (selected_record == null)
+                    return;
                 // visualize info
+                try
+                {
+                    // Get alive camera index
+                    List<int> cam_alive = new List<int>();
+                    Database.GetAliveCamEnc(Convert.ToInt32(selected_record.RecordNum), ref cam_alive);
+                    // Get frame interval
+                    int interval = Database.GetFrameIntervalEnc(Convert.ToInt32(selected_record.RecordNum), cam_alive[0]);
+                    if (interval == 0)
+                        return;
+                    int max_interval = (int)(interval * 1.5);
+                    // Find nearest imagedisp
+                    List<libMetroTunnelDB.ImageDisp> image_url_list = new List<ImageDisp>();
+                    Database.QueryImageDisp(ref image_url_list, Convert.ToInt32(selected_record.RecordNum), 
+                        Convert.ToInt32(selected_data.DataLoc) - interval, Convert.ToSingle(selected_data.DataLoc) + interval);
+                    if (image_url_list.Count >= 1)
+                    {
+                        // Generate 2D view
+                        
+
+                        // Show image
+                        ShowImage(new ImageUrlInput(image_url_list[0].FileUrl, null, null));
+
+                    }
+                }
+                catch(System.Exception)
+                {
+                    return;
+                }
+
             }
             
         }
 
+        public void ShowImage(ImageUrlInput image_url)
+        {
+            if (image_url.camn_image[0] != "")
+                Cam1_Image.Source = new ImageSourceConverter().ConvertFromString(image_url.camn_image[0]) as ImageSource;
+            if (image_url.camn_image[1] != "")
+                Cam2_Image.Source = new ImageSourceConverter().ConvertFromString(image_url.camn_image[1]) as ImageSource;
+            if (image_url.camn_image[2] != "")
+                Cam3_Image.Source = new ImageSourceConverter().ConvertFromString(image_url.camn_image[2]) as ImageSource;
+            if (image_url.camn_image[3] != "") 
+                Cam4_Image.Source = new ImageSourceConverter().ConvertFromString(image_url.camn_image[3]) as ImageSource;
+            if (image_url.camn_image[4] != "") 
+                Cam5_Image.Source = new ImageSourceConverter().ConvertFromString(image_url.camn_image[4]) as ImageSource;
+            if (image_url.camn_image[5] != "") 
+                Cam6_Image.Source = new ImageSourceConverter().ConvertFromString(image_url.camn_image[5]) as ImageSource;
+            if (image_url.camn_image[6] != "") 
+                Cam7_Image.Source = new ImageSourceConverter().ConvertFromString(image_url.camn_image[6]) as ImageSource;
+            if (image_url.camn_image[7] != "") 
+                Cam8_Image.Source = new ImageSourceConverter().ConvertFromString(image_url.camn_image[7]) as ImageSource;
+            if (image_url.camVO_image != "")
+                CamVO_Image.Source = new ImageSourceConverter().ConvertFromString(image_url.camVO_image) as ImageSource;
+            if (image_url.section_image != "") 
+                Section_Image.Source = new ImageSourceConverter().ConvertFromString(image_url.section_image) as ImageSource;
+        }
 
+    }
+
+    public class ImageUrlInput
+    {
+        public String[] camn_image { set; get; }
+        public String camVO_image { set; get; }
+        public String section_image { set; get; }
+
+        public const int StringArrLength = 8;
+
+        public ImageUrlInput(String[] _camn_image, String _camVO_image, String _section_image)
+        {
+            if (_camn_image.Length != StringArrLength)
+                return;
+            camn_image = new string[StringArrLength];
+            for (int i = 0; i < StringArrLength; i++)
+            {
+                camn_image[i] = _camn_image[i];
+            }
+            camVO_image = _camVO_image;
+            section_image = _section_image;
+        }
 
     }
 
@@ -1324,4 +1400,5 @@ namespace FileIO_UI
         }
     }
 
+    
 }

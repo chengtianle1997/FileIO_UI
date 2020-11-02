@@ -1118,12 +1118,12 @@ namespace libMetroTunnelDB
             DoQuery(queryStr, ref arr, ReadImageDisp);
         }
 
-        public void QueryImageDisp(ref List<ImageDisp> arr, int min_RecordID, int max_RecordID, float min_Distance = 0, float max_Distance = float.MaxValue)
-        {
-            String formatStr = "SELECT * FROM ImageDisp WHERE RecordID>={0} AND RecordID<={1} AND Distance>={2} AND Distance<={3}";
-            String queryStr = String.Format(formatStr, min_RecordID, max_RecordID, min_Distance, max_Distance);
-            DoQuery(queryStr, ref arr, ReadImageDisp);
-        }
+        //public void QueryImageDisp(ref List<ImageDisp> arr, int min_RecordID, int max_RecordID, float min_Distance = 0, float max_Distance = float.MaxValue)
+        //{
+        //    String formatStr = "SELECT * FROM ImageDisp WHERE RecordID>={0} AND RecordID<={1} AND Distance>={2} AND Distance<={3}";
+        //    String queryStr = String.Format(formatStr, min_RecordID, max_RecordID, min_Distance, max_Distance);
+        //    DoQuery(queryStr, ref arr, ReadImageDisp);
+        //}
 
         public String SearchImageUrl(int RecordID, int TimeStamp, int CameraID, int min_TimeStamp = 0, int max_TimeStamp = int.MaxValue)
         {
