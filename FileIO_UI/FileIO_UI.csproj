@@ -18,6 +18,7 @@
   <ItemGroup>
     <PackageReference Include="Ookii.Dialogs" Version="1.1.0" />
     <PackageReference Include="Ookii.Dialogs.Wpf" Version="1.1.0" />
+    <PackageReference Include="System.Drawing.Common" Version="4.7.0" />
   </ItemGroup>
 
   <ItemGroup>

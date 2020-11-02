@@ -70,6 +70,7 @@ namespace FileIO
                             float num = (scor * ConfigHandler.CameraBmm[CameraNum] + (scor - ConfigHandler.CameraM[CameraNum]) * ConfigHandler.BP1);
                             float den = Convert.ToSingle(ConfigHandler.CameraBmm[CameraNum] + (ConfigHandler.CameraM[CameraNum] - scor) * (ConfigHandler.BP2 * Math.Cos(alpha) + ConfigHandler.BP3 * Math.Sin(alpha)));
                             outputsa.s[i] = num / den;
+                            outputsa.a[i] += (float)(ConfigHandler.CameraDegree[CameraNum] * Math.PI / 180);
                         }
                         catch (System.NullReferenceException)
                         {

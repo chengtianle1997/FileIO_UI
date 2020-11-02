@@ -3,10 +3,13 @@ using libMetroTunnelDB;
 using Ookii.Dialogs.Wpf;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Threading;
 using System.Windows;
+using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace FileIO_UI
 {
@@ -1181,14 +1184,19 @@ namespace FileIO_UI
                     List<libMetroTunnelDB.ImageDisp> image_url_list = new List<ImageDisp>();
                     Database.QueryImageDisp(ref image_url_list, Convert.ToInt32(selected_record.RecordNum), 
                         Convert.ToInt32(selected_data.DataLoc) - interval, Convert.ToSingle(selected_data.DataLoc) + interval);
+                    
+                    List<libMetroTunnelDB.DataConv> data_conv_list = new List<DataConv>();
+                    Database.QueryDataConv(ref data_conv_list, Convert.ToInt32(selected_record.RecordNum), 
+                        Convert.ToSingle(selected_data.DataLoc), Convert.ToSingle(selected_data.DataLoc));
+                    if (data_conv_list.Count >= 1)
+                    {
+                        ShowSectionImage(data_conv_list[0]);
+                        ShowDetail(selected_data);
+                    }
                     if (image_url_list.Count >= 1)
                     {
-                        // Generate 2D view
-                        
-
                         // Show image
-                        ShowImage(new ImageUrlInput(image_url_list[0].FileUrl, null, null));
-
+                        ShowImage(new ImageUrlInput(image_url_list[0].FileUrl, null));
                     }
                 }
                 catch(System.Exception)
@@ -1200,8 +1208,34 @@ namespace FileIO_UI
             
         }
 
-        public void ShowImage(ImageUrlInput image_url)
+        public const int section_view_width = 320;
+        public const int section_view_height = 320;
+        public const int section_view_cx = section_view_width / 2;
+        public const int section_view_cy = section_view_height / 2;
+        public const int downsample_rate = 8;
+        public const int zoom_rate = 20;
+
+        public void ShowSectionImage(libMetroTunnelDB.DataConv dataConv)
         {
+            // Generate 2D image
+            Bitmap bmp = new Bitmap(section_view_width, section_view_height);
+            for (int i = 0; i < libMetroTunnelDB.DataConv.floatArrLength; i++)
+            {
+                if (i % downsample_rate == 0)
+                {
+                    float a_rotate = (float)(270 * Math.PI / 180 - dataConv.a[i]);
+                    int px = section_view_cx + (int)(dataConv.s[i] * Math.Cos(a_rotate) / zoom_rate);
+                    int py = section_view_cy + (int)(dataConv.s[i] * Math.Sin(a_rotate) / zoom_rate);
+                    if (px > 0 && py > 0 && px < section_view_width && py < section_view_height)
+                        bmp.SetPixel(px, py, System.Drawing.Color.Blue);
+                }
+            }
+
+            BitmapSource bmpSource = Imaging.CreateBitmapSourceFromHBitmap(bmp.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+            Section_Image.Source = bmpSource;
+        }
+        public void ShowImage(ImageUrlInput image_url)
+        {           
             if (image_url.camn_image[0] != "")
                 Cam1_Image.Source = new ImageSourceConverter().ConvertFromString(image_url.camn_image[0]) as ImageSource;
             if (image_url.camn_image[1] != "")
@@ -1219,9 +1253,19 @@ namespace FileIO_UI
             if (image_url.camn_image[7] != "") 
                 Cam8_Image.Source = new ImageSourceConverter().ConvertFromString(image_url.camn_image[7]) as ImageSource;
             if (image_url.camVO_image != "")
-                CamVO_Image.Source = new ImageSourceConverter().ConvertFromString(image_url.camVO_image) as ImageSource;
-            if (image_url.section_image != "") 
-                Section_Image.Source = new ImageSourceConverter().ConvertFromString(image_url.section_image) as ImageSource;
+                CamVO_Image.Source = new ImageSourceConverter().ConvertFromString(image_url.camVO_image) as ImageSource;            
+        }
+
+        public void ShowDetail(DataListItem dataitem)
+        {
+            Section_Detail_List.Items.Clear();
+            Section_Detail_List.Items.Add(String.Format("里程位置: \n {0}", dataitem.DataLoc));
+            Section_Detail_List.Items.Add(String.Format("截面长轴: \n {0} mm", dataitem.LongAxis));
+            Section_Detail_List.Items.Add(String.Format("截面短轴: \n {0} mm", dataitem.ShortAxis));
+            Section_Detail_List.Items.Add(String.Format("是否收敛: \n {0}", dataitem.Constriction));
+            Section_Detail_List.Items.Add(String.Format("存在裂缝: \n {0}", dataitem.Crack));
+            Section_Detail_List.Items.Add(String.Format("水平轴: \n {0} mm", dataitem.HorizontalAxis));
+            Section_Detail_List.Items.Add(String.Format("滚转角: \n {0}°", dataitem.Rotation));
         }
 
     }
@@ -1230,11 +1274,10 @@ namespace FileIO_UI
     {
         public String[] camn_image { set; get; }
         public String camVO_image { set; get; }
-        public String section_image { set; get; }
 
         public const int StringArrLength = 8;
 
-        public ImageUrlInput(String[] _camn_image, String _camVO_image, String _section_image)
+        public ImageUrlInput(String[] _camn_image, String _camVO_image)
         {
             if (_camn_image.Length != StringArrLength)
                 return;
@@ -1244,7 +1287,6 @@ namespace FileIO_UI
                 camn_image[i] = _camn_image[i];
             }
             camVO_image = _camVO_image;
-            section_image = _section_image;
         }
 
     }
@@ -1373,7 +1415,7 @@ namespace FileIO_UI
         }
     }
 
-    class DataListItem
+    public class DataListItem
     {
         public String DataLoc { set; get; }
         public String LongAxis { set; get; }

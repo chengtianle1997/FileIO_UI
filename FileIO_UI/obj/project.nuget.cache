@@ -1,11 +1,14 @@
 {
   "version": 2,
-  "dgSpecHash": "f3tH4GBbZVOv3z773bVhcqlVpClbXHfpTglaFZVpLhyEdT5BzNGklwPwz06JPemMisGb84gfnHjf/BgVcWwipA==",
+  "dgSpecHash": "60zxC7HfbY3pV44+XIpdTWJt8+iCStf0OeU+CTKDd2birfH9FL/Z49npW/jIGUx0O6B96Nu34SVF0J8/PQtxAA==",
   "success": true,
   "projectFilePath": "C:\\Users\\voies\\Desktop\\GodEyesProject\\FileIO_UI\\FileIO_UI\\FileIO_UI.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\voies\\.nuget\\packages\\microsoft.netcore.platforms\\3.1.0\\microsoft.netcore.platforms.3.1.0.nupkg.sha512",
+    "C:\\Users\\voies\\.nuget\\packages\\microsoft.win32.systemevents\\4.7.0\\microsoft.win32.systemevents.4.7.0.nupkg.sha512",
     "C:\\Users\\voies\\.nuget\\packages\\ookii.dialogs\\1.1.0\\ookii.dialogs.1.1.0.nupkg.sha512",
-    "C:\\Users\\voies\\.nuget\\packages\\ookii.dialogs.wpf\\1.1.0\\ookii.dialogs.wpf.1.1.0.nupkg.sha512"
+    "C:\\Users\\voies\\.nuget\\packages\\ookii.dialogs.wpf\\1.1.0\\ookii.dialogs.wpf.1.1.0.nupkg.sha512",
+    "C:\\Users\\voies\\.nuget\\packages\\system.drawing.common\\4.7.0\\system.drawing.common.4.7.0.nupkg.sha512"
   ],
   "logs": [
     {
