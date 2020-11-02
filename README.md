@@ -57,19 +57,19 @@ operations.
 
 **数据存储目录示意**
 
-**---\>** 2020-4-10-23-18-7-813**（**时间目录）
+**---\>** 2020-4-10-23-18-7-813\*\*（\*\*时间目录）
 
-**---\>** CalResult（数据目录）
+**-------\>** CalResult（数据目录）
 
----\> ResultX.csv
+\------------\> ResultX.csv
 
----\> EncodeResult（图像目录）
+\-------\> EncodeResult（图像目录）
 
----\> Camera00XXXXXXXXX_Image
+\------------\> Camera00XXXXXXXXX_Image
 
-\---\> Camera_00XXXXXXXXX.mjpeg
+\------------------\> Camera_00XXXXXXXXX.mjpeg
 
-\---\> TimeStamp_00XXXXXXXXX.csv
+\------------------\> TimeStamp_00XXXXXXXXX.csv
 
 1.  CalResult数据文件导入数据库中DataRaw表。
 
