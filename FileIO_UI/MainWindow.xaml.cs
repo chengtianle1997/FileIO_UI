@@ -573,6 +573,11 @@ namespace FileIO_UI
         
         private static List<DataRecord> selected_data_record = new List<DataRecord>();
 
+        private void Reset_Disk_Record_Button_Click(object sender, RoutedEventArgs e)
+        {
+            Data_Record_List.Items.Clear();
+        }
+
         private void Analyze_All_Button_Click(object sender, RoutedEventArgs e)
         {
             // Detect_record information collect
@@ -1232,9 +1237,63 @@ namespace FileIO_UI
             }
             
         }
+
+        private RecordListItem record_to_delete = null;
         private void Delete_Record_Option_Click(object sender, RoutedEventArgs e)
         {
-            
+            if (Record_List.SelectedItems.Count > 1)
+            {
+                DebugWriteLine("记录仅支持逐个删除");
+                return;
+            }
+            if (Record_List.SelectedItems.Count < 1)
+            {
+                return;
+            }
+            record_to_delete = Record_List.SelectedItem as RecordListItem;
+            if (record_to_delete == null)
+                return;
+            Wait_MySQL();
+            List<DataConv> data_list_delete = new List<DataConv>();
+            try
+            {
+                Database.QueryDataConv(ref data_list_delete, Convert.ToInt32(record_to_delete.RecordNum));
+            }
+            catch(System.Exception)
+            {
+                Release_MySQL();
+                return;               
+            }
+            Release_MySQL();
+            List<String> confirm_list = new List<String>();
+            confirm_list.Add("记录删除后不可恢复，请谨慎操作!");
+            confirm_list.Add("将被删除的记录信息：");
+            confirm_list.Add("记录编号：" + record_to_delete.RecordNum);
+            confirm_list.Add("采集时间：" + record_to_delete.CreateTime);
+            confirm_list.Add("数据条数：" + data_list_delete.Count);
+            ConfirmDialog confirmDialog = new ConfirmDialog(confirm_list);
+            confirmDialog.true_false_event += new ConfirmDialog.TrueFalseDelegate(Delete_Record_Process);
+            confirmDialog.ShowDialog();
+        }
+
+        private void Delete_Record_Process(bool value)
+        {
+            if (value)
+            {
+                Wait_MySQL();
+                try
+                {
+                    Database.DeleteDetectRecord(Convert.ToInt32(record_to_delete.RecordNum));
+                }
+                catch(System.Exception)
+                {
+                    Release_MySQL();
+                    DebugWriteLine("记录删除失败，请重试");
+                    return;
+                }
+                DebugWriteLine("记录删除成功");
+                Release_MySQL();
+            }
         }
 
         // Preview Area
@@ -1256,7 +1315,7 @@ namespace FileIO_UI
                 {
                     float a_rotate = (float)(270 * Math.PI / 180 - dataConv.a[i]);
                     int px = section_view_cx + (int)(dataConv.s[i] * Math.Cos(a_rotate) / zoom_rate);
-                    int py = section_view_cy + (int)(dataConv.s[i] * Math.Sin(a_rotate) / zoom_rate);
+                    int py = section_view_cy - (int)(dataConv.s[i] * Math.Sin(a_rotate) / zoom_rate);
                     if (px > 0 && py > 0 && px < section_view_width && py < section_view_height)
                         bmp.SetPixel(px, py, System.Drawing.Color.Blue);
                 }

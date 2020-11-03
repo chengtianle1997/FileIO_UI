@@ -718,8 +718,15 @@ namespace libMetroTunnelDB
         {
             MySqlCommand cmd = new MySqlCommand(deleteStr, conn);
             conn.Open();
-            cmd.ExecuteNonQuery();
-            conn.Close();
+            try
+            {
+                cmd.ExecuteNonQuery();
+            }
+            finally
+            {
+                conn.Close();
+            }
+            
         }
 
         // ---------------------------------------------------------------
@@ -1018,6 +1025,29 @@ namespace libMetroTunnelDB
             DoQuery(queryStrMax, ref dateTimes_max, ReadMaxDetectRecordTime);
             start_time = dateTimes_min[0];
             stop_time = dateTimes_max[0];
+        }
+
+        public void DeleteDetectRecord(int record_id)
+        {
+            String deleteStr = "DELETE FROM {0} WHERE RecordID={1}";
+            // Delete DataRaw
+            String deleteDataRawStr = String.Format(deleteStr, "DataRaw", record_id);
+            DoDelete(deleteDataRawStr);
+            // Delete DataConv
+            String deleteDataConvStr = String.Format(deleteStr, "DataConv", record_id);
+            DoDelete(deleteDataConvStr);
+            // Delete DataDisp
+            String deleteDataDispStr = String.Format(deleteStr, "DataDisp", record_id);
+            DoDelete(deleteDataDispStr);
+            // Delete ImageRaw
+            String deleteImageRawStr = String.Format(deleteStr, "ImageRaw", record_id);
+            DoDelete(deleteImageRawStr);
+            // Delete ImageDisp
+            String deleteImageDispStr = String.Format(deleteStr, "ImageDisp", record_id);
+            DoDelete(deleteImageDispStr);
+            // Delete DetectRecord
+            String deleteDetectRecordStr = String.Format(deleteStr, "DetectRecord", record_id);
+            DoDelete(deleteDetectRecordStr);
         }
 
         public void QueryDataOverview(ref List<DataOverview> arr, int RecordID, float min_Distance = 0, float max_Distance = float.MaxValue)

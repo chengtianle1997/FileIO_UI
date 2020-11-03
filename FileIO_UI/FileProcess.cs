@@ -192,7 +192,7 @@ namespace FileIO
                 
                 mw.DebugWriteLine("分析数据文件" + Filelist[i].text + "...");
                 //Handle the csv-Result
-                CSVHandler.HandleCSV(DataBase, record_id, csvpath, mw);
+                CSVHandler.HandleCSV(record_id, csvpath, mw);
                 mw.DebugWriteLine("分析数据文件" + Filelist[i].text + "完成");
             }
             
@@ -245,7 +245,7 @@ namespace FileIO
                 int cam_num = ConfigHandler.GetCameraNum(Filelist[i].children[1].text.Split("_")[1].Split(".")[0].ToCharArray());
                 if (cam_num < 1 || cam_num == 999)
                     continue;
-                CSVHandler.HandleTimestamp(DataBase, record_id, cam_num, mjpeg_csv_path, image_root_url, mw);
+                CSVHandler.HandleTimestamp(record_id, cam_num, mjpeg_csv_path, image_root_url, mw);
                 mw.DebugWriteLine("导入视频序列" + Filelist[i].text + "完成");
             }
             mw.DebugWriteLine("导入视频序列" + EncodeResult + "完成");

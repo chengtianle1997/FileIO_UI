@@ -107,9 +107,7 @@ namespace FileIO
                     CameraK01[i] = System.Convert.ToSingle(ReadString("CameraParam", CameraNK01, null));
                     CameraK11[i] = System.Convert.ToSingle(ReadString("CameraParam", CameraNK11, null));
                     CameraK02[i] = System.Convert.ToSingle(ReadString("CameraParam", CameraNK02, null));
-
                 }
-
             }
             catch (FormatException)
             {

@@ -39,8 +39,10 @@ namespace FileIO
             public int Timestamp;
         }
 
+        public static MetroTunnelDB database = new MetroTunnelDB();
+
         // Read and Handle the mjpeg-timestamp.csv file
-        public static void HandleTimestamp(MetroTunnelDB database, int record_id, int cam_num, string csv_file_path, string mjpeg_root_path, MainWindow mw)
+        public static void HandleTimestamp(int record_id, int cam_num, string csv_file_path, string mjpeg_root_path, MainWindow mw)
         {
             FileStream fs = new FileStream(csv_file_path, FileMode.Open, System.IO.FileAccess.Read);
             StreamReader sr = new StreamReader(fs);
@@ -102,7 +104,7 @@ namespace FileIO
         }
 
         //Read and Handle the csv-Result File
-        public static void HandleCSV(MetroTunnelDB database, int record_id, string filepath, MainWindow mw)
+        public static void HandleCSV(int record_id, string filepath, MainWindow mw)
         {
             FileStream fs = new FileStream(filepath, FileMode.Open, System.IO.FileAccess.Read);
             StreamReader sr = new StreamReader(fs);
