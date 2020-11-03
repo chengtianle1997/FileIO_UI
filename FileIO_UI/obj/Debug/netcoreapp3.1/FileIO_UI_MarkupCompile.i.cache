@@ -10,11 +10,11 @@ none
 false
 TRACE;DEBUG;NETCOREAPP;NETCOREAPP3_1
 C:\Users\voies\Desktop\GodEyesProject\FileIO_UI\FileIO_UI\App.xaml
-41112676711
+51081807243
 
-151529245803
+161063017431
 195-683102927
-ConfirmDialog.xaml;MainWindow.xaml;NewDeviceDialog.xaml;NewLineDialog.xaml;
+ConfirmDialog.xaml;DatabaseSettingDialog.xaml;MainWindow.xaml;NewDeviceDialog.xaml;NewLineDialog.xaml;
 
-True
+False
 

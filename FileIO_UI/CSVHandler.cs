@@ -90,7 +90,14 @@ namespace FileIO
                 ImageRaw imageRaw = new ImageRaw(record_id, mjpegTimeStamp.Timestamp, cam_num, image_url);
                 mw.SubProcessReport(mw.line_counter++);
                 // Insert into database
-                database.InsertIntoImageRaw(imageRaw);
+                try
+                {
+                    database.InsertIntoImageRaw(imageRaw);
+                }
+                catch(System.Exception)
+                {
+                    mw.DebugWriteLine("视频序列数据库插入异常");
+                }
             }
         }
 
@@ -226,10 +233,17 @@ namespace FileIO
 
                 //Send to MySQL
                 int retm = 0;
-                retm = database.InsertIntoDataRaw(dataraw);
+                try
+                {
+                    retm = database.InsertIntoDataRaw(dataraw);
+                }
+                catch(System.Exception)
+                {
+                    mw.DebugWriteLine("截面数据库插入异常");
+                }
                 if (!Convert.ToBoolean(retm))
                 {
-                    Console.WriteLine("Insert MySQL Failed !!! \n");
+                    mw.DebugWriteLine("截面数据库插入异常");
                 }
 
                 mw.SubProcessReport(mw.line_counter++);

@@ -150,8 +150,8 @@
                             <TextBox Name="End_Mileage_Text" HorizontalAlignment="Left" Margin="86,280,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Width="107" Grid.Row="1" Grid.ColumnSpan="6"/>
                             <Button Content="重置" HorizontalAlignment="Left" Margin="28,571,0,0" VerticalAlignment="Top" Grid.Row="1" Width="165" Height="25" Grid.ColumnSpan="6"/>
                             <TextBlock HorizontalAlignment="Left" Margin="58,233,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Row="1" Grid.Column="5"><Run Language="zh-cn" Text="数据库配置"/></TextBlock>
-                            <Button Content="修改" HorizontalAlignment="Left" Margin="162,231,0,0" VerticalAlignment="Top" Grid.Row="1" Width="38" Grid.Column="5"/>
-                            <TextBlock HorizontalAlignment="Left" Margin="58,253,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Row="1" Width="186" Grid.Column="5"><Run Language="zh-cn" Text=""/><Run Text="localhost:3306"/><Run Text=", user: "></Run><Run Text="root"></Run></TextBlock>
+                            <Button Name="Change_MySQL_Setting_Button" Content="修改" HorizontalAlignment="Left" Margin="162,231,0,0" VerticalAlignment="Top" Grid.Row="1" Width="38" Grid.Column="5" Click="Change_MySQL_Setting_Button_Click"/>
+                            <TextBlock HorizontalAlignment="Left" Margin="58,253,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Row="1" Width="186" Grid.Column="5"><Run Language="zh-cn" Text=""/><Run Name="MySQL_Address_Text" Text="localhost:3306"/><Run Text=", user: "></Run><Run Name="MySQL_User_Text" Text="root"></Run></TextBlock>
                             <Button Name="Analyze_All_Button" Content="全部导入" HorizontalAlignment="Left" Margin="31,571,0,0" VerticalAlignment="Top" Grid.Row="1" Width="203" Height="25" Grid.Column="5" Click="Analyze_All_Button_Click"/>
                             <TextBlock HorizontalAlignment="Left" Margin="19,0,0,0" TextWrapping="Wrap" VerticalAlignment="Center" Grid.ColumnSpan="3"><Run FontWeight="Bold" FontSize="14" Text="数据导入工作区"/></TextBlock>
                             <TextBlock HorizontalAlignment="Left" Margin="295,24,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="5"><Run FontWeight="Bold" FontSize="14" Text="数据处理工作"/><Run FontWeight="Bold" FontSize="14" Language="zh-cn" Text="区"/></TextBlock>
@@ -189,6 +189,15 @@
                                         <GridViewColumn Header="检测设备" Width="140" DisplayMemberBinding="{Binding DeviceName}"></GridViewColumn>
                                     </GridView>
                                 </ListView.View>
+                                <ListView.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="删除" Visibility="Collapsed" Click="Delete_Record_Option_Click">
+                                            <MenuItem.Icon>
+                                                <Image Source="/delete_icon.png" Width="12" Height="12"></Image>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                    </ContextMenu>
+                                </ListView.ContextMenu>
                             </ListView>
 
                             <ListView Name="Data_List" Margin="301,104,0,0" HorizontalAlignment="Left" Width="375" Height="468" VerticalAlignment="Top" Grid.Row="1" Grid.Column="5"

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Windows;
 
 namespace FileIO
 {
@@ -53,7 +54,7 @@ namespace FileIO
             return s.Trim();
         }
 
-        public static void ConfigInit()
+        public static bool ConfigInit()
         {
             try
             {
@@ -112,8 +113,10 @@ namespace FileIO
             }
             catch (FormatException)
             {
-                return;
+                MessageBox.Show("配置文件缺失，请重启软件", "确认", MessageBoxButton.OK);
+                return false;
             }
+            return true;
         }
 
         //Get CameraNum from SerialNum

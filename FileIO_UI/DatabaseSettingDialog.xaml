@@ -1,0 +1,34 @@
+﻿<Window x:Class="FileIO_UI.DatabaseSettingDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FileIO_UI"
+        mc:Ignorable="d"
+        Title="配置数据库参数" Height="202" Width="300">
+
+    <Window.Resources>
+
+    </Window.Resources>
+
+    <Viewbox Stretch="UniformToFill">
+        <DockPanel Height="220" Width="300">
+            <Grid Background="#FFE5E5E5">
+                <Label Content="" HorizontalAlignment="Left" Margin="25,32,0,0" VerticalAlignment="Top" Height="26"/>
+                <TextBox HorizontalAlignment="Left" Margin="88,36,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+                <Grid Background="#FFE5E5E5" Margin="0,0,0,34">
+                    <Label Content="数据库地址" HorizontalAlignment="Left" Margin="50,39,0,0" VerticalAlignment="Top" Height="26"/>
+                    <TextBox Name="DatabaseAddressText" HorizontalAlignment="Left" Margin="128,44,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+                    <Label Content="用户名" HorizontalAlignment="Left" Margin="61,69,0,0" VerticalAlignment="Top" Height="26"/>
+                    <TextBox Name="DatabaseUserText" HorizontalAlignment="Left" Margin="127,73,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+                    <Button Name="Cancel_Button" Content="取消" HorizontalAlignment="Left" Margin="69,141,0,0" VerticalAlignment="Top" Height="24" Width="66" Click="Cancel_Button_Click"/>
+                    <Button Name="Confirm_Button" Content="确认" HorizontalAlignment="Left" Margin="172,141,0,0" VerticalAlignment="Top" Height="24" Width="66" Click="Confirm_Button_Click"/>
+                    <Label Name="WarningLabel" Content="" HorizontalAlignment="Left" Margin="40,14,0,150" Width="236" Foreground="Red"/>
+                    <Label Content="密码" HorizontalAlignment="Left" Margin="67,98,0,0" VerticalAlignment="Top" Height="26"/>
+                    <!--<TextBox x:Name="DetectDeviceNameText_Copy" HorizontalAlignment="Left" Margin="118,0,0,0" TextWrapping="Wrap" VerticalAlignment="Center" Width="120"/>-->
+                    <PasswordBox Name="DatabaseKeyText" HorizontalAlignment="Left" Margin="127,102,0,0" VerticalAlignment="Top" Width="120"/>
+                </Grid>
+            </Grid>
+        </DockPanel>
+    </Viewbox>
+</Window>

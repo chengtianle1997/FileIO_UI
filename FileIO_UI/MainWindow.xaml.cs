@@ -35,7 +35,12 @@ namespace FileIO_UI
 
             // Initialize
             DataAnalyze.DataAnalyzeInit(Database, this);
-            ConfigHandler.ConfigInit();
+            if(!ConfigHandler.ConfigInit())
+            {
+                Application.Current.Shutdown();
+                return;
+            }
+                
             
             DebugWriteLine("程序初始化完成");
 
@@ -354,7 +359,7 @@ namespace FileIO_UI
             new_device_dlg.ShowDialog();
         }
 
-        //Device List
+        // Device List
 
         private void Refresh_Device_Button_Click_1(object sender, RoutedEventArgs e)
         {
@@ -373,7 +378,27 @@ namespace FileIO_UI
             DebugList.Items.Clear();
         }
 
-        //File choice
+        // MySQl Setting
+        private void Change_MySQL_Setting_Button_Click(object sender, RoutedEventArgs e)
+        {
+            if(MessageBox.Show("危险，修改配置可能造成程序不可用！", "确认", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            {
+                DatabaseSettingDialog databaseSettingDialog = new DatabaseSettingDialog(ref Database);
+                databaseSettingDialog.dlg_closed_event += new DatabaseSettingDialog.Dlg_Closed_Event(Show_MySQL_Setting);
+                databaseSettingDialog.ShowDialog();
+            }
+        }
+
+        public void Show_MySQL_Setting(String address, String user)
+        {
+            Dispatcher.Invoke(new Action(() =>
+            {
+                MySQL_Address_Text.Text = address;
+                MySQL_User_Text.Text = user;
+            }));          
+        }
+
+        // File choice
         private void Data_Disk_Choose_Button_Click(object sender, RoutedEventArgs e)
         {
             //OpenFileDialog openFileDialog = new OpenFileDialog();
@@ -1207,6 +1232,12 @@ namespace FileIO_UI
             }
             
         }
+        private void Delete_Record_Option_Click(object sender, RoutedEventArgs e)
+        {
+            
+        }
+
+        // Preview Area
 
         public const int section_view_width = 320;
         public const int section_view_height = 320;
@@ -1234,6 +1265,7 @@ namespace FileIO_UI
             BitmapSource bmpSource = Imaging.CreateBitmapSourceFromHBitmap(bmp.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
             Section_Image.Source = bmpSource;
         }
+
         public void ShowImage(ImageUrlInput image_url)
         {           
             if (image_url.camn_image[0] != "")
@@ -1267,6 +1299,8 @@ namespace FileIO_UI
             Section_Detail_List.Items.Add(String.Format("水平轴: \n {0} mm", dataitem.HorizontalAxis));
             Section_Detail_List.Items.Add(String.Format("滚转角: \n {0}°", dataitem.Rotation));
         }
+
+
 
     }
 

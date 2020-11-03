@@ -12,6 +12,9 @@
     <Compile Update="ConfirmDialog.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="DatabaseSettingDialog.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="NewDeviceDialog.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -21,6 +24,9 @@
   </ItemGroup>
   <ItemGroup>
     <Page Update="ConfirmDialog.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="DatabaseSettingDialog.xaml">
       <SubType>Designer</SubType>
     </Page>
     <Page Update="MainWindow.xaml">
