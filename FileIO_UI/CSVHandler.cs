@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -126,7 +127,7 @@ namespace FileIO
                 CalResPackage LineCalPack = new CalResPackage();
                 LineCalPack.s = new float[DataRows];
                 LineCalPack.a = new float[DataRows];
-                arrline = strline.Split(',');
+                arrline = strline.Split(',');                
                 if(isfirst)
                 {
                     columncount = arrline.Length;

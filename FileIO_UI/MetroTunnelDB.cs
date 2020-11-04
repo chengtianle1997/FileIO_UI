@@ -7,6 +7,7 @@ using MySqlX.XDevAPI.CRUD;
 using FileIO;
 using System.ComponentModel.DataAnnotations.Schema;
 using FileIO_UI;
+using Newtonsoft.Json;
 
 namespace libMetroTunnelDB
 {
@@ -316,6 +317,27 @@ namespace libMetroTunnelDB
         public DataEntry(in DataRaw entry)
         {
 
+        }
+    }
+
+    public class DisplayPCLJson
+    {
+        public String dpNo { set; get; }
+        public String value { set; get; }
+        public String itemStyle { set; get; }
+
+        public DisplayPCLJson(int _dpNo, float _x, float _y, float _z, bool _isAbnormal)
+        {
+            dpNo = _dpNo.ToString();
+            value = String.Format("[{0},{1},{2}]", _x, _y, _z);
+            if (_isAbnormal)
+            {
+                itemStyle = "{color:'red'}";
+            }
+            else
+            {
+                itemStyle = "{color:'blue'}";
+            }
         }
     }
 
@@ -1244,9 +1266,8 @@ namespace libMetroTunnelDB
             String formatStrMain = "SELECT * FROM DataRaw WHERE RecordID={0} AND CameraID={1} LIMIT {2},{3}";
             int cam_base = cam_alive[0];
             int MillisecondsMax = 24 * 3600 * 1000;
-
+            int json_cut = 10;
             
-
             while(!query_exit)
             {
                 // Query cam_base
@@ -1311,12 +1332,23 @@ namespace libMetroTunnelDB
                         Array.Copy(dataconv_single.a, 0, dataConv.a, 2048 * j, 2048);
                     }
                     // Send to MySQL
-                    int ret = InsertIntoDataConv(dataConv);
-                    if (!Convert.ToBoolean(ret))
-                        Console.WriteLine("Insert MySQL Failed !!!");
+                    InsertIntoDataConv(dataConv);
                     
-                    
-
+                    List<DisplayPCLJson> pcl_json_list = new List<DisplayPCLJson>();
+                    // Package Json
+                    for (int j = 0; j < 2048 * cam_alive.Count; j++)
+                    {
+                        if (j % json_cut == 0)
+                        {
+                            float a_rotate = (float)(270 * Math.PI / 180 - dataConv.a[i]);
+                            float x = (float)(dataConv.s[i] * Math.Cos(a_rotate));
+                            float y = (float)(dataConv.s[i] * Math.Sin(a_rotate));
+                            pcl_json_list.Add(new DisplayPCLJson((int)(dataConv.Distance), x, y, dataConv.Distance, false));
+                        }
+                    }
+                    String pcl_json_str = JsonConvert.SerializeObject(pcl_json_list);
+                    DataDisp dataDisp = new DataDisp(record_id, dataConv.Distance, pcl_json_str);
+                    InsertIntoDataDisp(dataDisp);
                 }
                 mw.DebugReWriteLine("合并数据分组 " + query_count + ": 完成");
                 Console.WriteLine("\n");

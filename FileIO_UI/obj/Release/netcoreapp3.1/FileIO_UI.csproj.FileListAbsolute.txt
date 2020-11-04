@@ -25,8 +25,9 @@ C:\Users\voies\Desktop\GodEyesProject\FileIO_UI\FileIO_UI\obj\Release\netcoreapp
 C:\Users\voies\Desktop\GodEyesProject\FileIO_UI\FileIO_UI\obj\Release\netcoreapp3.1\FileIO_UI.csproj.GenerateResource.cache
 C:\Users\voies\Desktop\GodEyesProject\FileIO_UI\FileIO_UI\obj\Release\netcoreapp3.1\FileIO_UI.AssemblyInfoInputs.cache
 C:\Users\voies\Desktop\GodEyesProject\FileIO_UI\FileIO_UI\obj\Release\netcoreapp3.1\FileIO_UI.AssemblyInfo.cs
-C:\Users\voies\Desktop\GodEyesProject\FileIO_UI\FileIO_UI\obj\Release\netcoreapp3.1\FileIO_UI.csproj.CoreCompileInputs.cache
 C:\Users\voies\Desktop\GodEyesProject\FileIO_UI\FileIO_UI\obj\Release\netcoreapp3.1\FileIO_UI.csproj.CopyComplete
 C:\Users\voies\Desktop\GodEyesProject\FileIO_UI\FileIO_UI\obj\Release\netcoreapp3.1\FileIO_UI.dll
 C:\Users\voies\Desktop\GodEyesProject\FileIO_UI\FileIO_UI\obj\Release\netcoreapp3.1\FileIO_UI.pdb
 C:\Users\voies\Desktop\GodEyesProject\FileIO_UI\FileIO_UI\obj\Release\netcoreapp3.1\FileIO_UI.genruntimeconfig.cache
+C:\Users\voies\Desktop\GodEyesProject\FileIO_UI\FileIO_UI\bin\Release\netcoreapp3.1\Newtonsoft.Json.dll
+C:\Users\voies\Desktop\GodEyesProject\FileIO_UI\FileIO_UI\obj\Release\netcoreapp3.1\FileIO_UI.csproj.CoreCompileInputs.cache

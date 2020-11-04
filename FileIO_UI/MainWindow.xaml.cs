@@ -1309,6 +1309,8 @@ namespace FileIO_UI
         {
             // Generate 2D image
             Bitmap bmp = new Bitmap(section_view_width, section_view_height);
+            Graphics g_bmp = Graphics.FromImage(bmp);
+            g_bmp.Clear(System.Drawing.Color.Gray);
             for (int i = 0; i < libMetroTunnelDB.DataConv.floatArrLength; i++)
             {
                 if (i % downsample_rate == 0)
