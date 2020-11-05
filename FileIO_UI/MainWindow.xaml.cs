@@ -1007,6 +1007,7 @@ namespace FileIO_UI
         {
             Wait_MySQL();
             List<libMetroTunnelDB.DataConv> datas = new List<DataConv>();
+            List<libMetroTunnelDB.DataOverview> dataOverviews = new List<DataOverview>();
             if (selected_record == null)
                 return;
             QueryFrom = 0;
@@ -1017,6 +1018,7 @@ namespace FileIO_UI
             try
             {
                 Database.QueryDataConv(ref datas, Convert.ToInt32(selected_record.RecordNum), QueryFrom, maxQuery);
+                Database.QueryDataOverview(ref dataOverviews, Convert.ToInt32(selected_record.RecordNum), QueryFrom, maxQuery);
                 QueryFrom += maxQuery;
             }
             catch(SystemException)
@@ -1028,7 +1030,8 @@ namespace FileIO_UI
             {
                 Dispatcher.Invoke(new Action(() =>
                 {
-                    Data_List.Items.Add(new DataListItem(datas[i].Distance, 0, 0, 0, 0, false, false));
+                    Data_List.Items.Add(new DataListItem(dataOverviews[i].Distance, dataOverviews[i].LongAxis, dataOverviews[i].ShortAxis
+                        , dataOverviews[i].HorizontalAxis, dataOverviews[i].Rotation, dataOverviews[i].Constriction, dataOverviews[i].Crack));
                 }));
             }
             Dispatcher.Invoke(new Action(() =>

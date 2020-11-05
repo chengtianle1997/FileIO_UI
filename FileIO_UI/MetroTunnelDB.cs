@@ -81,7 +81,7 @@ namespace libMetroTunnelDB
     public class DataOverview
     {
         public int RecordID;
-        public float Distance;
+        public double Distance;
         public float LongAxis;
         public float ShortAxis;
         public float HorizontalAxis;
@@ -89,7 +89,7 @@ namespace libMetroTunnelDB
         public bool Constriction;
         public bool Crack;
 
-        public DataOverview(int _RecordID, float _Distance, float _LongAxis, float _ShortAxis, float _HorizontalAxis, float _Rotation, bool _Constriction, bool _Crack)
+        public DataOverview(int _RecordID, double _Distance, float _LongAxis, float _ShortAxis, float _HorizontalAxis, float _Rotation, bool _Constriction, bool _Crack)
         {
             RecordID = _RecordID;
             Distance = _Distance;
@@ -323,21 +323,29 @@ namespace libMetroTunnelDB
     public class DisplayPCLJson
     {
         public String dpNo { set; get; }
-        public String value { set; get; }
-        public String itemStyle { set; get; }
+        public List<String> value { set; get; }
+        public itemSyleJson itemStyle { set; get; }
 
         public DisplayPCLJson(int _dpNo, float _x, float _y, float _z, bool _isAbnormal)
         {
             dpNo = _dpNo.ToString();
-            value = String.Format("[{0},{1},{2}]", _x, _y, _z);
+            value = new List<String>();
+            value.Add(_x.ToString());
+            value.Add(_y.ToString());
+            value.Add(_z.ToString());
+            itemStyle = new itemSyleJson(_isAbnormal);
+        }
+    }
+
+    public class itemSyleJson
+    {
+        public String color { set; get; }
+        public itemSyleJson(bool _isAbnormal)
+        {
             if (_isAbnormal)
-            {
-                itemStyle = "{color:'red'}";
-            }
+                color = "red";
             else
-            {
-                itemStyle = "{color:'blue'}";
-            }
+                color = "blue";
         }
     }
 
@@ -820,7 +828,7 @@ namespace libMetroTunnelDB
             DataOverview entry = new DataOverview
             (
                 reader.GetInt32("RecordID"),
-                reader.GetFloat("Distance"),
+                reader.GetDouble("Distance"),
                 reader.GetFloat("LongAxis"),
                 reader.GetFloat("ShortAxis"),
                 reader.GetFloat("HorizontalAxis"),
@@ -1061,12 +1069,18 @@ namespace libMetroTunnelDB
             // Delete DataDisp
             String deleteDataDispStr = String.Format(deleteStr, "DataDisp", record_id);
             DoDelete(deleteDataDispStr);
+            // Delete DataOverview
+            String deleteDataOverviewStr = String.Format(deleteStr, "DataOverview", record_id);
+            DoDelete(deleteDataOverviewStr);
             // Delete ImageRaw
             String deleteImageRawStr = String.Format(deleteStr, "ImageRaw", record_id);
             DoDelete(deleteImageRawStr);
             // Delete ImageDisp
             String deleteImageDispStr = String.Format(deleteStr, "ImageDisp", record_id);
             DoDelete(deleteImageDispStr);
+            // Delete TandD
+            String deleteTandDStr = String.Format(deleteStr, "TandD", record_id);
+            DoDelete(deleteTandDStr);
             // Delete DetectRecord
             String deleteDetectRecordStr = String.Format(deleteStr, "DetectRecord", record_id);
             DoDelete(deleteDetectRecordStr);
@@ -1076,6 +1090,13 @@ namespace libMetroTunnelDB
         {
             String formatStr = "SELECT * FROM DataOverview WHERE RecordID={0} AND Distance>={1} AND Distance<={2}";
             String queryStr = String.Format(formatStr, RecordID, min_Distance, max_Distance);
+            DoQuery(queryStr, ref arr, ReadDataOverview);
+        }
+
+        public void QueryDataOverview(ref List<DataOverview> arr, int RecordID, int QueryStart, int QueryNum)
+        {
+            String formatStr = "SELECT * FROM DataOverview WHERE RecordID={0} LIMIT {1},{2}";
+            String queryStr = String.Format(formatStr, RecordID, QueryStart, QueryNum);
             DoQuery(queryStr, ref arr, ReadDataOverview);
         }
 
@@ -1333,6 +1354,12 @@ namespace libMetroTunnelDB
                     }
                     // Send to MySQL
                     InsertIntoDataConv(dataConv);
+
+                    // DataOverview
+                    float LongAxis = 0, ShortAxis = 0, HorizontalAxis = 0, Rotation = 0;
+                    bool Constriction = false, Crack = false;
+                    DataOverview dataOverview = new DataOverview(record_id, dataConv.Distance, LongAxis, ShortAxis, HorizontalAxis, Rotation, Constriction, Crack);
+                    InsertIntoDataOverview(dataOverview);
                     
                     List<DisplayPCLJson> pcl_json_list = new List<DisplayPCLJson>();
                     // Package Json
