@@ -1341,9 +1341,10 @@ namespace libMetroTunnelDB
                         if (j % json_cut == 0)
                         {
                             float a_rotate = (float)(270 * Math.PI / 180 - dataConv.a[i]);
-                            float x = (float)(dataConv.s[i] * Math.Cos(a_rotate));
-                            float y = (float)(dataConv.s[i] * Math.Sin(a_rotate));
-                            pcl_json_list.Add(new DisplayPCLJson((int)(dataConv.Distance), x, y, dataConv.Distance, false));
+                            float x = dataConv.Distance;
+                            float y = (float)(dataConv.s[i] * Math.Cos(a_rotate));
+                            float z = (float)(dataConv.s[i] * Math.Sin(a_rotate));
+                            pcl_json_list.Add(new DisplayPCLJson((int)(dataConv.Distance), x, y, z, false));
                         }
                     }
                     String pcl_json_str = JsonConvert.SerializeObject(pcl_json_list);
