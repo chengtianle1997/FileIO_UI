@@ -18,8 +18,7 @@ namespace FileIO_UI
     /// </summary>
     public partial class MainWindow : Window
     {
-        public static MetroTunnelDB Database = new MetroTunnelDB();
-
+        
         public static List<String> DataDiskDir = new List<string>();
 
         Dictionary<DateTime, DataRecord> record_dict = new Dictionary<DateTime, DataRecord>();
@@ -34,7 +33,8 @@ namespace FileIO_UI
             this.Closing += Window_Closing;
 
             // Initialize
-            DataAnalyze.DataAnalyzeInit(Database, this);
+            DataAnalyze.DataAnalyzeInit(this);
+
             if(!ConfigHandler.ConfigInit())
             {
                 Application.Current.Shutdown();
@@ -90,8 +90,8 @@ namespace FileIO_UI
 
         private void Refresh_LineInfo_t()
         {
-            Wait_MySQL();
             List<libMetroTunnelDB.Line> line = new List<libMetroTunnelDB.Line>();
+            MetroTunnelDB Database = new MetroTunnelDB();
             Database.QueryLine(ref line);
             Dispatcher.Invoke(new Action(() => { LineInfoList.Items.Clear(); }));
             for(int i = 0; i < line.Count; i++)
@@ -99,7 +99,6 @@ namespace FileIO_UI
                 Dispatcher.Invoke(new Action(() => { LineInfoList.Items.Add(
                     new LineInfo(line[i].LineNumber, line[i].LineName, line[i].TotalMileage, line[i].CreateTime)); }));
             }
-            Release_MySQL();
             DebugWriteLine("线路信息更新完成");
             return;
         }
@@ -114,8 +113,8 @@ namespace FileIO_UI
 
         private void Refresh_DeviceInfo_t()
         {
-            Wait_MySQL();
             List<DetectDevice> detectDevices = new List<DetectDevice>();
+            MetroTunnelDB Database = new MetroTunnelDB();
             Database.QueryDetectDevice(ref detectDevices);
             Dispatcher.Invoke(new Action(() => { DetectDeviceInfoList.Items.Clear(); }));
             for(int i = 0; i < detectDevices.Count(); i++)
@@ -124,7 +123,6 @@ namespace FileIO_UI
                     new DetectDeviceInfo(detectDevices[i].DetectDeviceNumber, 
                     detectDevices[i].DetectDeviceName, detectDevices[i].CreateTime)); }));
             }
-            Release_MySQL();
             DebugWriteLine("设备信息更新完成");
             return;
         }
@@ -318,6 +316,7 @@ namespace FileIO_UI
 
         private void Add_New_Line_Button_Click(object sender, RoutedEventArgs e)
         {
+            MetroTunnelDB Database = new MetroTunnelDB();
             NewLineDialog new_line_dlg = new NewLineDialog(Database, null);
             new_line_dlg.dlg_closed_event += new NewLineDialog.Dlg_Closed_Event(Refresh_LineInfo);
             new_line_dlg.ShowDialog();
@@ -325,6 +324,7 @@ namespace FileIO_UI
 
         private void Edit_Line_Option_Click(object sender, RoutedEventArgs e)
         {
+            MetroTunnelDB Database = new MetroTunnelDB();
             if (LineInfoList.SelectedItems.Count > 1)
             {
                 DebugWriteLine("编辑选项仅可作用于单行信息");
@@ -343,7 +343,8 @@ namespace FileIO_UI
 
         private void Edit_Device_Option_Click(object sender, RoutedEventArgs e)
         {
-            if(DetectDeviceInfoList.SelectedItems.Count > 1)
+            MetroTunnelDB Database = new MetroTunnelDB();
+            if (DetectDeviceInfoList.SelectedItems.Count > 1)
             {
                 DebugWriteLine("编辑选项仅可作用于单行信息");
                 return;
@@ -368,6 +369,7 @@ namespace FileIO_UI
 
         private void Add_New_Device_Button_Click(object sender, RoutedEventArgs e)
         {
+            MetroTunnelDB Database = new MetroTunnelDB();
             NewDeviceDialog new_device_dlg = new NewDeviceDialog(Database, null);
             new_device_dlg.dlg_closed_event += new NewDeviceDialog.Dlg_Closed_Event(Refresh_DeviceInfo);
             new_device_dlg.ShowDialog();
@@ -381,7 +383,8 @@ namespace FileIO_UI
         // MySQl Setting
         private void Change_MySQL_Setting_Button_Click(object sender, RoutedEventArgs e)
         {
-            if(MessageBox.Show("危险，修改配置可能造成程序不可用！", "确认", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            MetroTunnelDB Database = new MetroTunnelDB();
+            if (MessageBox.Show("危险，修改配置可能造成程序不可用！", "确认", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
                 DatabaseSettingDialog databaseSettingDialog = new DatabaseSettingDialog(ref Database);
                 databaseSettingDialog.dlg_closed_event += new DatabaseSettingDialog.Dlg_Closed_Event(Show_MySQL_Setting);
@@ -580,6 +583,7 @@ namespace FileIO_UI
 
         private void Analyze_All_Button_Click(object sender, RoutedEventArgs e)
         {
+            MetroTunnelDB Database = new MetroTunnelDB();
             // Detect_record information collect
             if (LineInfoList.SelectedItems.Count > 1)
             {
@@ -695,8 +699,7 @@ namespace FileIO_UI
 
         private void Analyze_All_Button_Click_t()
         {
-            Wait_MySQL();
-            
+            MetroTunnelDB Database = new MetroTunnelDB();
             // Query to find new record_id (record_id start from 1)
             int record_id_max = 0;
             try
@@ -840,8 +843,7 @@ namespace FileIO_UI
             //    query_num++;
             //    record_id_max++;
             //}
-            DebugWriteLine("全部导入成功");
-            Release_MySQL();
+            DebugWriteLine("全部导入成功");           
         }
 
         // Multi-view list manager
@@ -914,7 +916,7 @@ namespace FileIO_UI
 
         private void GetLineList_t()
         {
-            Wait_MySQL();
+            MetroTunnelDB Database = new MetroTunnelDB();
             List<libMetroTunnelDB.Line> line = new List<libMetroTunnelDB.Line>();
             Dispatcher.Invoke(new Action(() => { Line_List.Items.Clear(); }));
             try
@@ -923,7 +925,6 @@ namespace FileIO_UI
             }
             catch(SystemException)
             {
-                Release_MySQL();
                 return;
             }
             for (int i = 0; i < line.Count; i++)
@@ -931,7 +932,6 @@ namespace FileIO_UI
                 Dispatcher.Invoke(new Action(() => { Line_List.Items.Add(
                     new LineListItem(line[i].LineNumber, line[i].LineName, line[i].TotalMileage, line[i].CreateTime)); }));
             }
-            Release_MySQL();
         }
 
         public void GetRecordList()
@@ -941,7 +941,7 @@ namespace FileIO_UI
         }
         private void GetRecordList_t()
         {
-            Wait_MySQL();
+            MetroTunnelDB Database = new MetroTunnelDB();
             List<libMetroTunnelDB.DetectRecord> detectRecords = new List<DetectRecord>();
             Dispatcher.Invoke(new Action(() => { Record_List.Items.Clear(); }));
             try
@@ -974,7 +974,6 @@ namespace FileIO_UI
             }
             catch(SystemException)
             {
-                Release_MySQL();
                 return;
             }
             
@@ -995,7 +994,6 @@ namespace FileIO_UI
                     new RecordListItem(detectRecords[i].RecordID.ToString(), detect_line.LineName, 
                     detectRecords[i].DetectTime, detectRecords[i].Length, detectRecords[i].Start_Loc, detectRecords[i].Stop_Loc, detect_device.DetectDeviceName)); }));
             }
-            Release_MySQL();
         }
         public void GetDataList()
         {
@@ -1005,7 +1003,7 @@ namespace FileIO_UI
 
         private void GetDataList_t()
         {
-            Wait_MySQL();
+            MetroTunnelDB Database = new MetroTunnelDB();
             List<libMetroTunnelDB.DataConv> datas = new List<DataConv>();
             List<libMetroTunnelDB.DataOverview> dataOverviews = new List<DataOverview>();
             if (selected_record == null)
@@ -1023,7 +1021,6 @@ namespace FileIO_UI
             }
             catch(SystemException)
             {
-                Release_MySQL();
                 return;
             }                       
             for (int i = 0; i < datas.Count; i++)
@@ -1038,7 +1035,6 @@ namespace FileIO_UI
             {
                 Data_List.Items.Add(new DataListItem("..."));
             }));
-            Release_MySQL();
         }
 
         public void GetMoreData()
@@ -1049,7 +1045,7 @@ namespace FileIO_UI
 
         private void GetMoreData_t()
         {
-            Wait_MySQL();
+            MetroTunnelDB Database = new MetroTunnelDB();
             List<libMetroTunnelDB.DataConv> datas = new List<DataConv>();
             if (selected_record == null)
                 return;
@@ -1060,7 +1056,6 @@ namespace FileIO_UI
             }
             catch (SystemException)
             {
-                Release_MySQL();
                 return;
             }
             Dispatcher.Invoke(new Action(() =>
@@ -1078,7 +1073,6 @@ namespace FileIO_UI
             {
                 Data_List.Items.Add(new DataListItem("..."));
             }));
-            Release_MySQL();
         }
 
         public void ShowViewByIndex(int view_index)
@@ -1115,7 +1109,7 @@ namespace FileIO_UI
         {
             try
             {
-                Wait_MySQL();
+                MetroTunnelDB Database = new MetroTunnelDB();
                 Database.GetMaxMinDetectRecordTime(ref start_date, ref end_date);
                 Dispatcher.Invoke(new Action(() =>
                {
@@ -1130,11 +1124,10 @@ namespace FileIO_UI
                 selected_record = null;
                 selected_data = null;
                 RefreshSelectedConditionText();
-                Release_MySQL();
             }
             catch(System.Exception)
             {
-                Release_MySQL();
+                ;
             }
             
         }
@@ -1192,6 +1185,7 @@ namespace FileIO_UI
 
         private void Data_List_Item_DoubleClick(object sender, RoutedEventArgs e)
         {
+            MetroTunnelDB Database = new MetroTunnelDB();
             selected_data = Data_List.SelectedItem as DataListItem;
             if (selected_data.DataLoc == "...")
             {
@@ -1244,6 +1238,7 @@ namespace FileIO_UI
         private RecordListItem record_to_delete = null;
         private void Delete_Record_Option_Click(object sender, RoutedEventArgs e)
         {
+            MetroTunnelDB Database = new MetroTunnelDB();
             if (Record_List.SelectedItems.Count > 1)
             {
                 DebugWriteLine("记录仅支持逐个删除");
@@ -1256,7 +1251,6 @@ namespace FileIO_UI
             record_to_delete = Record_List.SelectedItem as RecordListItem;
             if (record_to_delete == null)
                 return;
-            Wait_MySQL();
             List<DataConv> data_list_delete = new List<DataConv>();
             try
             {
@@ -1264,10 +1258,8 @@ namespace FileIO_UI
             }
             catch(System.Exception)
             {
-                Release_MySQL();
                 return;               
             }
-            Release_MySQL();
             List<String> confirm_list = new List<String>();
             confirm_list.Add("记录删除后不可恢复，请谨慎操作!");
             confirm_list.Add("将被删除的记录信息：");
@@ -1283,19 +1275,17 @@ namespace FileIO_UI
         {
             if (value)
             {
-                Wait_MySQL();
+                MetroTunnelDB Database = new MetroTunnelDB();
                 try
                 {
                     Database.DeleteDetectRecord(Convert.ToInt32(record_to_delete.RecordNum));
                 }
                 catch(System.Exception)
                 {
-                    Release_MySQL();
                     DebugWriteLine("记录删除失败，请重试");
                     return;
                 }
                 DebugWriteLine("记录删除成功");
-                Release_MySQL();
             }
         }
 

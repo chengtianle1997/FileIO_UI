@@ -130,13 +130,12 @@ namespace FileIO
     //Scan all the files and analyze
     public class DataAnalyze
     {
-        private static MetroTunnelDB DataBase;
+        private static MetroTunnelDB DataBase = new MetroTunnelDB();
         public static int threadControlCounter = 0;
         // public static int record_id = 1;
         private static MainWindow mw;
-        public static void DataAnalyzeInit(MetroTunnelDB database, MainWindow _mw)
+        public static void DataAnalyzeInit(MainWindow _mw)
         {
-            DataBase = database;
             mw = _mw;
             //DataBase.InsertIntoLine(new Line("1", "1号线", 234.43F, DateTime.Now));
             //DataBase.InsertIntoDetectRecord(new DetectRecord(record_id, new DateTime(2019, 11, 28, 23, 30, 00), "1-01", 300, 23421, 23721));
@@ -147,7 +146,7 @@ namespace FileIO
         //    string filepath = (string)o_filepath;
         //    List<FileNames> Filelist = new List<FileNames>();
         //    GetSystemAllPath.GetallDirectory(Filelist,filepath);
-            
+
         //    for(int i = 0; i < Filelist.Count(); i++ )
         //    {              
         //        string timeFolder = filepath +"\\"+ Filelist[i].text;          
@@ -173,7 +172,7 @@ namespace FileIO
         //    ScanCalResult(CalResFolder, record_id);
         //    ScanEncodeResult(EncodeFolder, record_id);
         //} 
-        
+
         //Deal with CalResult
         public static void ScanCalResult(object o_filepath, int record_id)
         {
@@ -185,17 +184,30 @@ namespace FileIO
                 mw.DebugWriteLine("未发现数据文件");
                 return;
             }
-            for(int i=0 ; i<Filelist.Count() ; i++)
+            for(int i = 0 ; i < Filelist.Count() ;i++)
             {
                 string csvpath = filepath + "\\" + Filelist[i].text;
                 //Console.WriteLine("---Analyzing " + Filelist[i].text + ".....\n");
                 
                 mw.DebugWriteLine("分析数据文件" + Filelist[i].text + "...");
-                //Handle the csv-Result
-                CSVHandler.HandleCSV(record_id, csvpath, mw);
-                mw.DebugWriteLine("分析数据文件" + Filelist[i].text + "完成");
+                CSVHandler.HandleCSVParam hcsv_param;
+                hcsv_param.record_id = record_id;
+                hcsv_param.filepath = csvpath;
+                hcsv_param.mw = mw;
+                // Handle the csv-Result
+                //CSVHandler.HandleCSV(hcsv_param);
+                // Handle the csv-Result mtd
+                Thread HandleCSV_thread = new Thread(CSVHandler.HandleCSV);
+                HandleCSV_thread.Start(hcsv_param);
+                
             }
-            
+            while (threadControlCounter < Filelist.Count())
+            {
+                mw.SubProcessReport(mw.line_counter);
+                Thread.Sleep(100);
+            }
+            // mw.DebugWriteLine("分析数据文件" + Filelist[i].text + "完成");
+
         }
 
         public static void MergeCalResult(int record_id)
@@ -245,12 +257,23 @@ namespace FileIO
                 int cam_num = ConfigHandler.GetCameraNum(Filelist[i].children[1].text.Split("_")[1].Split(".")[0].ToCharArray());
                 if (cam_num < 1 || cam_num == 999)
                     continue;
-                CSVHandler.HandleTimestamp(record_id, cam_num, mjpeg_csv_path, image_root_url, mw);
-                mw.DebugWriteLine("导入视频序列" + Filelist[i].text + "完成");
+                CSVHandler.HandleTimestampParam htime_param;
+                htime_param.record_id = record_id;
+                htime_param.cam_num = cam_num;
+                htime_param.csv_file_path = mjpeg_csv_path;
+                htime_param.mjpeg_root_path = image_root_url;
+                htime_param.mw = mw;
+                // Handle Timestamp csv
+                //CSVHandler.HandleTimestamp(htime_param);
+                // Handle Timestamp csv mtd
+                Thread htime_thread = new Thread(CSVHandler.HandleTimestamp);
+                htime_thread.Start(htime_param);
+
+                // mw.DebugWriteLine("导入视频序列" + Filelist[i].text + "完成");
             }
             mw.DebugWriteLine("导入视频序列" + EncodeResult + "完成");
             
-            while(threadControlCounter < Filelist.Count())
+            while(threadControlCounter < (Filelist.Count() * 2))
             {
                 int task_now = (int)(GetSystemAllPath.GetDirectorySize(filepath + "\\DecodeResult")/1000000);
                 mw.SubProcessReport(task_now + mw.line_counter);

@@ -40,13 +40,37 @@ namespace FileIO
             public int Timestamp;
         }
 
-        public static MetroTunnelDB database = new MetroTunnelDB();
+        public struct HandleCSVParam
+        {
+            public int record_id;
+            public string filepath;
+            public MainWindow mw;
+        }
+
+        public struct HandleTimestampParam
+        {
+            public int record_id;
+            public int cam_num;
+            public string csv_file_path;
+            public string mjpeg_root_path;
+            public MainWindow mw;
+        }
+
+        
 
         // Read and Handle the mjpeg-timestamp.csv file
-        public static void HandleTimestamp(int record_id, int cam_num, string csv_file_path, string mjpeg_root_path, MainWindow mw)
+        public static void HandleTimestamp(object param)
         {
+            HandleTimestampParam htime_param = (HandleTimestampParam)param;
+            int record_id = htime_param.record_id;
+            int cam_num = htime_param.cam_num;
+            string csv_file_path = htime_param.csv_file_path;
+            string mjpeg_root_path = htime_param.mjpeg_root_path;
+            MainWindow mw = htime_param.mw;
+
             FileStream fs = new FileStream(csv_file_path, FileMode.Open, System.IO.FileAccess.Read);
             StreamReader sr = new StreamReader(fs);
+            MetroTunnelDB database = new MetroTunnelDB();
 
             // Record the Line once
             string strline;
@@ -91,7 +115,8 @@ namespace FileIO
                 // Get ImageRaw
                 String image_url = mjpeg_root_path + "\\f" + mjpegTimeStamp.FrameNum.ToString() + ".jpg";
                 ImageRaw imageRaw = new ImageRaw(record_id, mjpegTimeStamp.Timestamp, cam_num, image_url);
-                mw.SubProcessReport(mw.line_counter++);
+                // mw.SubProcessReport(mw.line_counter++);
+                mw.line_counter++;
                 // Insert into database
                 try
                 {
@@ -105,8 +130,13 @@ namespace FileIO
         }
 
         //Read and Handle the csv-Result File
-        public static void HandleCSV(int record_id, string filepath, MainWindow mw)
+        public static void HandleCSV(object param)
         {
+            HandleCSVParam hcsv_param = (HandleCSVParam)param;
+            MetroTunnelDB database = new MetroTunnelDB();
+            int record_id = hcsv_param.record_id;
+            string filepath = hcsv_param.filepath;
+            MainWindow mw = hcsv_param.mw;
             FileStream fs = new FileStream(filepath, FileMode.Open, System.IO.FileAccess.Read);
             StreamReader sr = new StreamReader(fs);
 
@@ -249,9 +279,12 @@ namespace FileIO
                     mw.DebugWriteLine("截面数据库插入异常");
                 }
 
-                mw.SubProcessReport(mw.line_counter++);
-                
+                mw.line_counter++;
+
+                // mw.SubProcessReport(mw.line_counter++);
+
             }
+            DataAnalyze.threadControlCounter += 1;
         }
 
         public static int GetLineCount(string filepath, MainWindow mw)
