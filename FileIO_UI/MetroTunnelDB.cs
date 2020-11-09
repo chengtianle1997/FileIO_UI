@@ -171,13 +171,13 @@ namespace libMetroTunnelDB
     public class DataConv
     {
         public int RecordID;
-        public float Distance;
+        public double Distance;
         public float[] s;
         public float[] a;
 
         public const int floatArrLength = 2048 * 8;
 
-        public DataConv(int _RecordID, float _Distance, float[] _s, float[] _a)
+        public DataConv(int _RecordID, double _Distance, float[] _s, float[] _a)
         {
             RecordID = _RecordID;
             Distance = _Distance;
@@ -199,10 +199,10 @@ namespace libMetroTunnelDB
     public class DataDisp
     {
         public int RecordID;
-        public float Distance;
+        public double Distance;
         public String JsonString;
 
-        public DataDisp(int _RecordID, float _Distance, String _JsonString)
+        public DataDisp(int _RecordID, double _Distance, String _JsonString)
         {
             RecordID = _RecordID;
             Distance = _Distance;
@@ -214,9 +214,9 @@ namespace libMetroTunnelDB
     {
         public int RecordID;
         public int TimeStamp;
-        public float Distance;
+        public double Distance;
 
-        public TandD(int _RecordID, int _TimeStamp, float _Distance)
+        public TandD(int _RecordID, int _TimeStamp, double _Distance)
         {
             RecordID = _RecordID;
             TimeStamp = _TimeStamp;
@@ -1368,7 +1368,7 @@ namespace libMetroTunnelDB
                         if (j % json_cut == 0)
                         {
                             float a_rotate = (float)(270 * Math.PI / 180 - dataConv.a[i]);
-                            float x = dataConv.Distance;
+                            float x = (float)dataConv.Distance;
                             float y = (float)(dataConv.s[i] * Math.Cos(a_rotate));
                             float z = (float)(dataConv.s[i] * Math.Sin(a_rotate));
                             pcl_json_list.Add(new DisplayPCLJson((int)(dataConv.Distance), x, y, z, false));
@@ -1553,13 +1553,13 @@ namespace libMetroTunnelDB
                 if (flag)
                     continue;
 
-                float distance = EstimateDistance(RecordID, clustered_ts[i], dateDivision);
+                double distance = EstimateDistance(RecordID, clustered_ts[i], dateDivision);
 
-                DataConv dataConverted = new DataConv(RecordID, distance);
+                DataConv dataConverted = new DataConv(RecordID, (float)distance);
                 ProcessData(cluster, ref dataConverted);
 
                 InsertIntoDataConv(dataConverted);
-                InsertIntoImageDisp(new ImageDisp(RecordID, distance, imageFileUrl));
+                InsertIntoImageDisp(new ImageDisp(RecordID, (float)distance, imageFileUrl));
             }
         }
 
@@ -1595,7 +1595,7 @@ namespace libMetroTunnelDB
             return dateDivision.Value;
         }
 
-        private float EstimateDistance(int RecordID, int TimeStamp, int dateDivision)
+        private double EstimateDistance(int RecordID, int TimeStamp, int dateDivision)
         {
             List<TandD> arr = new List<TandD>();
             QueryTandD(ref arr, RecordID);
@@ -1604,7 +1604,7 @@ namespace libMetroTunnelDB
             refineTimeStamps(arr, dateDivision);
 
             int ts1 = arr[0].TimeStamp, ts2 = -1;
-            float dist1 = arr[0].Distance, dist2 = -1;
+            double dist1 = arr[0].Distance, dist2 = -1;
             int diff1 = Math.Abs(arr[0].TimeStamp - TimeStamp), diff2 = int.MaxValue;
 
             for (int i = 1; i < arr.Count; i++)

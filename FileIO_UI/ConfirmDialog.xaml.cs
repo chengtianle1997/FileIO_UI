@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -45,6 +46,11 @@ namespace FileIO_UI
 
         private void ConfirmButton_Click(object sender, RoutedEventArgs e)
         {
+            Dispatcher.Invoke(new Action(() =>
+            {
+                ConfirmButton.Content = "请稍候...";
+            }));
+            Thread.Sleep(100);
             true_false_event?.Invoke(true);
             Close();
         }

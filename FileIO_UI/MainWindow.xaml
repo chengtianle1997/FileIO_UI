@@ -51,7 +51,7 @@
                             <TextBox Name="Data_Disk_Choose_Text" HorizontalAlignment="Left" Margin="28,325,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Width="289" Grid.Row="1" Grid.ColumnSpan="6" Height="18"/>
                             <Button Name="Backup_Disk_Choose_Button" Content="浏览" HorizontalAlignment="Left" Margin="159,0,0,0" VerticalAlignment="Center" Grid.Row="1" Grid.Column="5" Width="84" Click="Backup_Disk_Choose_Button_Click"/>
                             <TextBlock HorizontalAlignment="Center" Margin="0,352,0,0" Text="备份盘" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Row="1"/>
-                            <TextBox Name="Backup_Disk_Choose_Text" HorizontalAlignment="Left" Margin="28,0,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Center" Width="289" Grid.Row="1" Grid.ColumnSpan="6" Height="20"/>
+                            <TextBox Name="Backup_Disk_Choose_Text" HorizontalAlignment="Left" Margin="28,0,0,0" Text="请将磁盘数据全选并手动拷贝至备份盘" TextWrapping="Wrap" VerticalAlignment="Center" Width="289" Grid.Row="1" Grid.ColumnSpan="6" Height="20"/>
                             <TextBlock HorizontalAlignment="Left" Margin="24,207,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Row="1"><Run Text="导入"/><Run Language="zh-cn" Text="参数"/></TextBlock>
                             <TextBlock HorizontalAlignment="Left" Margin="25,43,0,0" TextWrapping="Wrap" VerticalAlignment="Top"><Run Text="线路"/><Run Language="zh-cn" Text="选择"/></TextBlock>
                             <ListView Name="LineInfoList" Margin="25,3,0,0" Grid.ColumnSpan="6" HorizontalAlignment="Left" Width="375" Height="118" VerticalAlignment="Top" Grid.Row="1" 

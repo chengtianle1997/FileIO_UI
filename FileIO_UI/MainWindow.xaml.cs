@@ -56,11 +56,11 @@ namespace FileIO_UI
         // Window closing warning
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            if(!MySQL_is_valid())
+            if(isAnalyzing)
             {
-                if (MessageBox.Show("任务正在进行，关闭窗口将导致数据丢失", "确认", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                if (MessageBox.Show("任务正在进行，关闭窗口将导致数据丢失", "取消", MessageBoxButton.OK) == MessageBoxResult.OK)
                 {
-                    e.Cancel = false;
+                    e.Cancel = true;
                 }
                 else
                 {
@@ -527,9 +527,9 @@ namespace FileIO_UI
                             DataDiskDir[i] + "/" + time_folder_list[j].text, 0, record_time));
                     }
                     DebugWriteLine("扫描" + DataDiskDir[i] + "/" + time_folder_list[j].text);
-                    MainProcessBarSet((int)((i + 1) * process_per_i + j * process_per_i / time_folder_list.Count));
+                    //MainProcessBarSet((int)((i + 1) * process_per_i + j * process_per_i / time_folder_list.Count));
                 }
-                MainProcessBarSet((i + 1) * process_per_i);
+                //MainProcessBarSet((i + 1) * process_per_i);
             }
             if (record_dict.Count < 1)
             {
@@ -547,7 +547,7 @@ namespace FileIO_UI
                     for (int i = 0; i < dataRecord.DataDiskDirList.Count; i++)
                     {
                         file_size += GetSystemAllPath.GetDirectorySize(dataRecord.DataDiskDirList[i]) / (1024 * 1024);
-                        MainProcessBarSet(dict_counter * process_per_record + i * process_per_record / dataRecord.DataDiskDirList.Count);
+                        //MainProcessBarSet(dict_counter * process_per_record + i * process_per_record / dataRecord.DataDiskDirList.Count);
                     }
                     // Decide the unit (M or G)
                     if(file_size > 1024)
@@ -560,11 +560,11 @@ namespace FileIO_UI
                     }                    
                     Dispatcher.Invoke(new Action(() => { Data_Record_List.Items.Add(dataRecord); }));
                     dict_counter++;
-                    MainProcessBarSet(dict_counter * process_per_record);
+                    //MainProcessBarSet(dict_counter * process_per_record);
                 }
             }
             
-            MainProcessBarSet(100);
+            //MainProcessBarSet(100);
             DebugWriteLine("数据盘扫描完成");
         }
 
@@ -581,8 +581,21 @@ namespace FileIO_UI
             Data_Record_List.Items.Clear();
         }
 
+        public static bool isAnalyzing = false;
+        public static bool isDeleting = false;
+
         private void Analyze_All_Button_Click(object sender, RoutedEventArgs e)
         {
+            if (isAnalyzing)
+            {
+                MessageBox.Show("数据正在导入，请等待完成后重试", "确认", MessageBoxButton.OK);
+                return;
+            }
+            if (isDeleting)
+            {
+                MessageBox.Show("正在删除数据，请等待完成后重试", "确认", MessageBoxButton.OK);
+                return;
+            }
             MetroTunnelDB Database = new MetroTunnelDB();
             // Detect_record information collect
             if (LineInfoList.SelectedItems.Count > 1)
@@ -699,6 +712,7 @@ namespace FileIO_UI
 
         private void Analyze_All_Button_Click_t()
         {
+            isAnalyzing = true;
             MetroTunnelDB Database = new MetroTunnelDB();
             // Query to find new record_id (record_id start from 1)
             int record_id_max = 0;
@@ -843,6 +857,7 @@ namespace FileIO_UI
             //    query_num++;
             //    record_id_max++;
             //}
+            isAnalyzing = false;
             DebugWriteLine("全部导入成功");           
         }
 
@@ -1238,6 +1253,16 @@ namespace FileIO_UI
         private RecordListItem record_to_delete = null;
         private void Delete_Record_Option_Click(object sender, RoutedEventArgs e)
         {
+            if(isAnalyzing)
+            {
+                MessageBox.Show("数据正在导入，请等待完成后重试", "确认", MessageBoxButton.OK);
+                return;
+            }
+            if(isDeleting)
+            {
+                MessageBox.Show("正在删除数据，请等待完成后重试", "确认", MessageBoxButton.OK);
+                return;
+            }
             MetroTunnelDB Database = new MetroTunnelDB();
             if (Record_List.SelectedItems.Count > 1)
             {
@@ -1275,18 +1300,30 @@ namespace FileIO_UI
         {
             if (value)
             {
-                MetroTunnelDB Database = new MetroTunnelDB();
-                try
-                {
-                    Database.DeleteDetectRecord(Convert.ToInt32(record_to_delete.RecordNum));
-                }
-                catch(System.Exception)
-                {
-                    DebugWriteLine("记录删除失败，请重试");
-                    return;
-                }
-                DebugWriteLine("记录删除成功");
+                Thread delete_record_process = new Thread(Delete_Record_Process_t);               
+                delete_record_process.Start();               
             }
+        }
+
+        // private bool Delete_Process_EndSign = true;
+        private void Delete_Record_Process_t()
+        {
+            isDeleting = true;
+            DebugWriteLine("正在删除记录,请不要执行其他操作...");
+            MetroTunnelDB Database = new MetroTunnelDB();
+            try
+            {
+                Database.DeleteDetectRecord(Convert.ToInt32(record_to_delete.RecordNum));
+            }
+            catch (System.Exception)
+            {
+                DebugReWriteLine("记录删除失败，请重试");
+                isDeleting = false;
+                return;
+            }
+            DebugReWriteLine("记录删除成功");
+            isDeleting = false;
+            ShowRecordList();
         }
 
         // Preview Area

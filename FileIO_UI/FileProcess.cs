@@ -199,13 +199,18 @@ namespace FileIO
                 // Handle the csv-Result mtd
                 Thread HandleCSV_thread = new Thread(CSVHandler.HandleCSV);
                 HandleCSV_thread.Start(hcsv_param);
-                
+                // Handle the csv-Result mtd and multi-line
+                //Thread HandleCSV_thread = new Thread(CSVHandler.HandleCSV_multiLine);
+                //HandleCSV_thread.Start(hcsv_param);
+
             }
             while (threadControlCounter < Filelist.Count())
             {
                 mw.SubProcessReport(mw.line_counter);
                 Thread.Sleep(100);
             }
+
+            threadControlCounter = 0;
             // mw.DebugWriteLine("分析数据文件" + Filelist[i].text + "完成");
 
         }
