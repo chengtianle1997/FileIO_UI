@@ -154,7 +154,7 @@
                             <TextBlock HorizontalAlignment="Left" Margin="58,253,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Row="1" Width="186" Grid.Column="5"><Run Language="zh-cn" Text=""/><Run Name="MySQL_Address_Text" Text="localhost:3306"/><Run Text=", user: "></Run><Run Name="MySQL_User_Text" Text="root"></Run></TextBlock>
                             <Button Name="Analyze_All_Button" Content="全部导入" HorizontalAlignment="Left" Margin="31,571,0,0" VerticalAlignment="Top" Grid.Row="1" Width="203" Height="25" Grid.Column="5" Click="Analyze_All_Button_Click"/>
                             <TextBlock HorizontalAlignment="Left" Margin="19,0,0,0" TextWrapping="Wrap" VerticalAlignment="Center" Grid.ColumnSpan="3"><Run FontWeight="Bold" FontSize="14" Text="数据导入工作区"/></TextBlock>
-                            <TextBlock HorizontalAlignment="Left" Margin="295,24,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="5"><Run FontWeight="Bold" FontSize="14" Text="数据处理工作"/><Run FontWeight="Bold" FontSize="14" Language="zh-cn" Text="区"/></TextBlock>
+                            <TextBlock HorizontalAlignment="Left" Margin="295,24,0,17" TextWrapping="Wrap" Grid.Column="5"><Run FontWeight="Bold" FontSize="14" Text="数据处理工作"/><Run FontWeight="Bold" FontSize="14" Language="zh-cn" Text="区"/></TextBlock>
 
                             <ListView Name="Line_List" Margin="301,104,0,0" HorizontalAlignment="Left" Width="375" Height="468" VerticalAlignment="Top" Grid.Row="1" Grid.Column="5"
                                       ScrollViewer.HorizontalScrollBarVisibility="Auto" 
@@ -266,10 +266,20 @@
                         </Grid>
                     </TabItem>
                     <TabItem Header="数据概览">
-                        <Grid Background="#FFE5E5E5"/>
-                    </TabItem>
-                    <TabItem Header="图像概览">
-                        <Grid Background="#FFE5E5E5"/>
+                        <Grid Background="#FFE5E5E5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="19*"/>
+                                <ColumnDefinition Width="12*"/>
+                                <ColumnDefinition Width="1413*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock HorizontalAlignment="Left" Margin="4,16,0,786" TextWrapping="Wrap" Grid.ColumnSpan="2" Grid.Column="1"><Run FontWeight="Bold" FontSize="14" Text="数据选择"/><Run FontWeight="Bold" FontSize="14" Language="zh-cn" Text="区"/></TextBlock>
+                            <TextBlock HorizontalAlignment="Left" Margin="6,42,0,766" TextWrapping="Wrap" Grid.Column="1" Grid.ColumnSpan="2"><Run Language="zh-cn" Text="时间范围"/></TextBlock>
+                            <DatePicker x:Name="Start_Date_Picker_DataTab" Grid.Column="1" HorizontalAlignment="Left" Margin="6,62,0,0" VerticalAlignment="Top" Width="135" Grid.ColumnSpan="2"/>
+                            <TextBlock HorizontalAlignment="Left" Margin="138,66,0,742" TextWrapping="Wrap" Grid.Column="2"><Run Language="zh-cn" Text="到"/></TextBlock>
+                            <DatePicker x:Name="End_Date_Picker_DataTab" Grid.Column="2" HorizontalAlignment="Left" Margin="161,62,0,0" VerticalAlignment="Top" Width="135"/>
+                            <Button x:Name="Search_Record_Button_DataTab" Content="查询记录" HorizontalAlignment="Left" Margin="311,64,0,0" VerticalAlignment="Top" Grid.Column="2" Width="72" Click="Search_Record_Button_Click"/>
+                            <Button x:Name="Reset_All_Button_DataTab" Content="重置所有" HorizontalAlignment="Left" Margin="311,36,0,0" VerticalAlignment="Top" Grid.Column="2" Width="72" Click="Search_Record_Button_Click"/>
+                        </Grid>
                     </TabItem>
                 </TabControl>
             </Grid>

@@ -71,6 +71,8 @@ operations.
 
 \------------------\> TimeStamp_00XXXXXXXXX.csv
 
+\-------\> MeterCounter.csv（里程计记录）
+
 1.  CalResult数据文件导入数据库中DataRaw表。
 
 2.  里程计数据文件导入数据库中TandD表。

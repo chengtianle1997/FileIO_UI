@@ -174,9 +174,10 @@ namespace FileIO
         //} 
 
         //Deal with CalResult
-        public static void ScanCalResult(object o_filepath, int record_id)
+        public static void ScanCalResult(object o_filepath, string metercsv, int record_id)
         {
             string filepath = (string)o_filepath;
+            int extra_file_count = 0;
             List<FileNames> Filelist = new List<FileNames>();
             GetSystemAllPath.GetallDirectory(Filelist, filepath);
             if(Filelist.Count() < 1)
@@ -184,11 +185,11 @@ namespace FileIO
                 mw.DebugWriteLine("未发现数据文件");
                 return;
             }
+            // Analyze csv result
             for(int i = 0 ; i < Filelist.Count() ;i++)
             {
                 string csvpath = filepath + "\\" + Filelist[i].text;
-                //Console.WriteLine("---Analyzing " + Filelist[i].text + ".....\n");
-                
+                //Console.WriteLine("---Analyzing " + Filelist[i].text + ".....\n");               
                 mw.DebugWriteLine("分析数据文件" + Filelist[i].text + "...");
                 CSVHandler.HandleCSVParam hcsv_param;
                 hcsv_param.record_id = record_id;
@@ -204,7 +205,20 @@ namespace FileIO
                 //HandleCSV_thread.Start(hcsv_param);
 
             }
-            while (threadControlCounter < Filelist.Count())
+            // Analyze mileage result
+            if (File.Exists(metercsv))
+            {
+                extra_file_count++;
+                mw.DebugWriteLine("分析里程记录文件" + metercsv);
+                CSVHandler.HandleMileageParam hmil_param;
+                hmil_param.csv_file_path = metercsv;
+                hmil_param.record_id = record_id;
+                hmil_param.mw = mw;
+                Thread HandleMil_thread = new Thread(CSVHandler.HandleMileage);
+                HandleMil_thread.Start(hmil_param);
+            }
+            // Waiting for all threads work done
+            while (threadControlCounter < (Filelist.Count() + extra_file_count))
             {
                 mw.SubProcessReport(mw.line_counter);
                 Thread.Sleep(100);

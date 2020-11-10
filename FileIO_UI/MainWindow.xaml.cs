@@ -795,11 +795,12 @@ namespace FileIO_UI
                     DebugWriteLine("扫描数据文件" + Filelist[0].text + "...");
                     line_counter = 1;
                     string csvpath = CalResFolder + "\\" + Filelist[0].text;
+                    string metercsv = dataRecord.DataDiskDirList[j] + "\\MeterCounter.csv";
                     line_sum = CSVHandler.GetLineCount(csvpath, this);                   
                     DebugReWriteLine("扫描数据文件" + "完成");
 
                     MainProcessReport("分析数据", (int)(line_sum * 8.1), i + 1, stage_counter);
-                    DataAnalyze.ScanCalResult(CalResFolder, record_id_max);
+                    DataAnalyze.ScanCalResult(CalResFolder, metercsv, record_id_max);
                     SubProcessFinished(stage_counter++);
                     // MainProcessFinished(i + 1);
 
@@ -819,7 +820,7 @@ namespace FileIO_UI
                     int mjpeg_size = (int)(GetSystemAllPath.GetDirectorySize(EncodeResult)/1000000);
                     int jpeg_size_est = mjpeg_size * 2;
 
-                    MainProcessReport("解析视频" + dataRecord.DataDiskDirList[j], (int)(enc_line_sum * 8.1) + jpeg_size_est, i + 1, stage_counter);
+                    MainProcessReport("解析视频", (int)(enc_line_sum * 8.1) + jpeg_size_est, i + 1, stage_counter);
                     line_counter = 1;
                     DataAnalyze.ScanEncodeResult(EncodeFolder, record_id_max);
                     SubProcessFinished(stage_counter++);

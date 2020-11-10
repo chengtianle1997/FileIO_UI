@@ -8,6 +8,8 @@ using FileIO;
 using System.ComponentModel.DataAnnotations.Schema;
 using FileIO_UI;
 using Newtonsoft.Json;
+using System.Net.Http.Headers;
+using System.Linq;
 
 namespace libMetroTunnelDB
 {
@@ -1221,7 +1223,129 @@ namespace libMetroTunnelDB
 
         // --------------------------------------------------------------- 2020/10/20 updated
         // Generate DataConv from DataRaw (merge data from 8 cameras
-        
+
+        // Get the interval time between two mileage data
+        public int GetMeterInterval(int record_id)
+        {
+            int max_record_num = 10;
+            String formatStr = "SELECT * FROM TandD WHERE RecordID={0} LIMIT 0,{1}";
+            String queryStr = String.Format(formatStr, record_id, max_record_num);
+            List<TandD> arr = new List<TandD>();
+            DoQuery(queryStr, ref arr, ReadTandD);
+            if(arr.Count < max_record_num)
+            {
+                // Interval = 0: no mileage data
+                return 0;
+            }
+            int interval_sum = 0;
+            int interval_count = 0;
+            for(int i = 1; i < arr.Count; i++)
+            {
+                interval_sum += Math.Abs(arr[i].TimeStamp - arr[i - 1].TimeStamp);
+                interval_count++;
+            }
+            int interval = interval_sum / interval_count;
+            return interval;
+        }
+        // Get the mileage of exact record and time
+        public double GetMileage(int record_id, int TimeStamp, int interval)
+        {
+            if (interval <= 0)
+                return 0;
+            String formatStr = "SELECT * FROM TandD WHERE RecordID={0} AND TimeStamp>={1} AND TimeStamp<={2}";
+            int time_out_counter = 0;
+            int time_out_counter_max = 5;
+            int search_rate = 2;
+            int search_int = interval;
+            int min_pos_value = int.MaxValue;
+            int min_neg_value = int.MaxValue;
+            double min_pos_dist = 0, min_neg_dist = 0;
+            int min_pos_time = 0, min_neg_time = 0;
+            int MillisecondsMax = 24 * 3600000;
+
+            while (time_out_counter < time_out_counter_max)
+            {
+                List<TandD> arr = new List<TandD>();
+                if (TimeStamp - search_int < 0)
+                {
+                    List<TandD> arr1 = new List<TandD>();
+                    List<TandD> arr2 = new List<TandD>();
+                    String queryStr1 = String.Format(formatStr, record_id, (TimeStamp - search_int) % MillisecondsMax, MillisecondsMax);
+                    String queryStr2 = String.Format(formatStr, record_id, 0, TimeStamp + search_int);
+                    DoQuery(queryStr1, ref arr1, ReadTandD);
+                    DoQuery(queryStr2, ref arr2, ReadTandD);
+                    arr.Concat(arr1);
+                    arr.Concat(arr2);
+                }
+                else if (TimeStamp + search_int > MillisecondsMax)
+                {
+                    List<TandD> arr1 = new List<TandD>();
+                    List<TandD> arr2 = new List<TandD>();
+                    String queryStr1 = String.Format(formatStr, record_id, TimeStamp - search_int, MillisecondsMax);
+                    String queryStr2 = String.Format(formatStr, record_id, 0, (TimeStamp + search_int) % MillisecondsMax);
+                    DoQuery(queryStr1, ref arr1, ReadTandD);
+                    DoQuery(queryStr2, ref arr2, ReadTandD);
+                    arr.Concat(arr1);
+                    arr.Concat(arr2);
+                }
+                else
+                {
+                    String queryStr = String.Format(formatStr, record_id, TimeStamp - search_int, TimeStamp + search_int);
+                    DoQuery(queryStr, ref arr, ReadTandD);
+                } 
+                // Find the closest two location
+                for (int i = 0; i < arr.Count; i++)
+                {
+                    int pos_dis = (arr[i].TimeStamp - TimeStamp) % MillisecondsMax;
+                    int neg_dis = (TimeStamp - arr[i].TimeStamp) % MillisecondsMax;
+                    if (pos_dis >= neg_dis)
+                    {
+                        // arr.Time locate at the left of Timestamp
+                        if (neg_dis < min_neg_value)
+                        {
+                            min_neg_value = neg_dis;
+                            min_neg_time = arr[i].TimeStamp;
+                            min_neg_dist = arr[i].Distance;
+                        }
+                    }
+                    else
+                    {
+                        // arr.Time locate at the right of Timestamp
+                        if (pos_dis < min_pos_value)
+                        {
+                            min_pos_value = pos_dis;
+                            min_pos_time = arr[i].TimeStamp;
+                            min_pos_dist = arr[i].Distance;
+                        }
+                    }
+                }
+                // Find both min_pos and min_neg value
+                if (min_neg_value < int.MaxValue && min_pos_value < int.MaxValue)
+                {
+                    break;
+                }
+                // Double the interval and query again
+                else
+                {
+                    search_int *= search_rate;
+                }
+                time_out_counter++;
+            }
+            // Check the result
+            if (min_neg_value < int.MaxValue && min_pos_value < int.MaxValue)
+            {
+                // Calculate the estimate mileage
+                double s_n = (min_pos_dist - min_neg_dist) * (TimeStamp - min_neg_time) / (min_pos_time - min_neg_time) + min_neg_dist;
+                return s_n;
+            }
+            else
+            {
+                // Fail to find the mileage
+                return 0;
+            }
+
+        }
+
         // Get alive camera index
         public void GetAliveCam(int record_id, ref List<int> cam_alive)
         {
@@ -1278,6 +1402,9 @@ namespace libMetroTunnelDB
             if (interval == 0)
                 return;
 
+            // Check whether the mileage counter is valid
+            int mil_int = GetMeterInterval(record_id);
+
             // Basic Param
             int max_int = Convert.ToInt32(interval * 0.3);
             int query_max = 5000;
@@ -1306,7 +1433,16 @@ namespace libMetroTunnelDB
                     int time_base = base_raw[i].TimeStamp;
                     List<DataRaw> line = new List<DataRaw>();
                     List<DataConv> line_conv = new List<DataConv>();
-                    DataConv dataConv = new DataConv(record_id, Convert.ToSingle(time_base));
+                    // Check whether the mileage is valid: valid -> save distance, invalid -> save time_base
+                    DataConv dataConv;
+                    if(mil_int > 0)
+                    {
+                        dataConv = new DataConv(record_id, GetMileage(record_id, time_base, mil_int));
+                    }
+                    else
+                    {
+                        dataConv = new DataConv(record_id, Convert.ToDouble(time_base));
+                    }               
                     // Save the data from base camera
                     line.Add(base_raw[i]);
                     // Query each camera
@@ -1439,6 +1575,9 @@ namespace libMetroTunnelDB
             if (interval == 0)
                 return;
 
+            // Check whether the mileage counter is valid
+            int mil_int = GetMeterInterval(record_id);
+
             // Basic Param
             int max_int = Convert.ToInt32(interval * 0.3);
             int query_max = 5000;
@@ -1464,7 +1603,18 @@ namespace libMetroTunnelDB
                     int time_base = base_raw[i].TimeStamp;
                     List<ImageRaw> line = new List<ImageRaw>();
                     //List<ImageDisp> line_conv = new List<ImageDisp>();
-                    ImageDisp imageDisp = new ImageDisp(record_id, Convert.ToSingle(time_base));
+                    // Check whether the mileage counter is valid: valid -> save distance, invalid -> save time_base
+                    ImageDisp imageDisp;
+                    if(mil_int > 0)
+                    {
+
+                        imageDisp = new ImageDisp(record_id, GetMileage(record_id, time_base, mil_int));
+                    }
+                    else
+                    {
+                        imageDisp = new ImageDisp(record_id, Convert.ToSingle(time_base));
+                    }
+
                     // Save the data from base camera
                     line.Add(base_raw[i]);
                     // Query each camera
