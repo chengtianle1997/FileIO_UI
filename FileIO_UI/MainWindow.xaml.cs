@@ -1393,6 +1393,417 @@ namespace FileIO_UI
         }
 
 
+        // Multi-view list manager in DataTab
+        int list_index_status_datatab = 1; // indicator of view index: <=0 -> LineList, 1 -> RecordList(main view), >=2 -> DataList
+        DateTime start_date_datatab = new DateTime(), end_date_datatab = new DateTime(); // date choice
+        LineListItem selected_line_datatab = null;
+        RecordListItem selected_record_datatab = null;
+        DataListItem selected_data_datatab = null;
+        int QueryFrom_datatab = 0;
+        
+        public void ShowLineList_DataTab()
+        {
+            Dispatcher.Invoke(new Action(() =>
+            {
+                Line_List_DataTab.Visibility = System.Windows.Visibility.Visible;
+                Record_List_DataTab.Visibility = System.Windows.Visibility.Hidden;
+                Data_List_DataTab.Visibility = System.Windows.Visibility.Hidden;
+
+                Line_List_View_Button_DataTab.Background = (System.Windows.Media.Brush)SelectedColor;
+                Record_List_View_Button_DataTab.Background = (System.Windows.Media.Brush)UnSelectedColor;
+                Data_List_View_Button_DataTab.Background = (System.Windows.Media.Brush)UnSelectedColor;
+
+            }));
+
+            list_index_status_datatab = 0;
+            GetLineList_DataTab();
+        }
+        public void ShowRecordList_DataTab()
+        {
+            Dispatcher.Invoke(new Action(() =>
+            {
+                Record_List_DataTab.Visibility = System.Windows.Visibility.Visible;
+                Line_List_DataTab.Visibility = System.Windows.Visibility.Hidden;
+                Data_List_DataTab.Visibility = System.Windows.Visibility.Hidden;
+
+                Line_List_View_Button_DataTab.Background = (System.Windows.Media.Brush)UnSelectedColor;
+                Record_List_View_Button_DataTab.Background = (System.Windows.Media.Brush)SelectedColor;
+                Data_List_View_Button_DataTab.Background = (System.Windows.Media.Brush)UnSelectedColor;
+            }));
+
+            list_index_status_datatab = 1;
+            GetRecordList_DataTab();
+        }
+        public void ShowDataList_DataTab()
+        {
+            Dispatcher.Invoke(new Action(() =>
+            {
+                Data_List_DataTab.Visibility = System.Windows.Visibility.Visible;
+                Line_List_DataTab.Visibility = System.Windows.Visibility.Hidden;
+                Record_List_DataTab.Visibility = System.Windows.Visibility.Hidden;
+
+                Line_List_View_Button_DataTab.Background = (System.Windows.Media.Brush)UnSelectedColor;
+                Record_List_View_Button_DataTab.Background = (System.Windows.Media.Brush)UnSelectedColor;
+                Data_List_View_Button_DataTab.Background = (System.Windows.Media.Brush)SelectedColor;
+            }));
+
+            list_index_status_datatab = 2;
+            GetDataList_DataTab();
+        }
+
+        public void GetLineList_DataTab()
+        {
+            Thread get_line_list_thread = new Thread(GetLineList_t_DataTab);
+            get_line_list_thread.Start();
+        }
+
+        private void GetLineList_t_DataTab()
+        {
+            MetroTunnelDB Database = new MetroTunnelDB();
+            List<libMetroTunnelDB.Line> line = new List<libMetroTunnelDB.Line>();
+            Dispatcher.Invoke(new Action(() => { Line_List_DataTab.Items.Clear(); }));
+            try
+            {
+                Database.QueryLine(ref line);
+            }
+            catch (SystemException)
+            {
+                return;
+            }
+            for (int i = 0; i < line.Count; i++)
+            {
+                Dispatcher.Invoke(new Action(() => {
+                    Line_List_DataTab.Items.Add(
+                        new LineListItem(line[i].LineNumber, line[i].LineName, line[i].TotalMileage, line[i].CreateTime));
+                }));
+            }
+        }
+
+        public void GetRecordList_DataTab()
+        {
+            Thread get_detect_record_thread = new Thread(GetRecordList_t_DataTab);
+            get_detect_record_thread.Start();
+        }
+        private void GetRecordList_t_DataTab()
+        {
+            MetroTunnelDB Database = new MetroTunnelDB();
+            List<libMetroTunnelDB.DetectRecord> detectRecords = new List<DetectRecord>();
+            Dispatcher.Invoke(new Action(() => { Record_List_DataTab.Items.Clear(); }));
+            try
+            {
+                if (selected_line_datatab == null)
+                {
+                    if (start_date_datatab == null || end_date_datatab == null)
+                    {
+                        Database.QueryDetectRecord(ref detectRecords);
+                    }
+                    else
+                    {
+                        Database.QueryDetectRecord(ref detectRecords, start_date_datatab, end_date_datatab);
+                    }
+                }
+                else
+                {
+                    List<libMetroTunnelDB.Line> select_line_list = new List<libMetroTunnelDB.Line>();
+                    Database.QueryLine(ref select_line_list, selected_line_datatab.LineNum);
+                    int selected_line_id = (int)select_line_list[0].LineID;
+                    if (start_date_datatab == null || end_date_datatab == null)
+                    {
+                        Database.QueryDetectRecord(ref detectRecords, selected_line_id);
+                    }
+                    else
+                    {
+                        Database.QueryDetectRecord(ref detectRecords, selected_line_id, start_date_datatab, end_date_datatab);
+                    }
+                }
+            }
+            catch (SystemException)
+            {
+                return;
+            }
+
+            for (int i = 0; i < detectRecords.Count; i++)
+            {
+                libMetroTunnelDB.Line detect_line = null;
+                libMetroTunnelDB.DetectDevice detect_device = null;
+                try
+                {
+                    Database.QueryLine(ref detect_line, detectRecords[i].LineID);
+                    Database.QueryDetectDevice(ref detect_device, detectRecords[i].DeviceID);
+                }
+                catch (SystemException)
+                {
+                    continue;
+                }
+                Dispatcher.Invoke(new Action(() => {
+                    Record_List_DataTab.Items.Add(
+                        new RecordListItem(detectRecords[i].RecordID.ToString(), detect_line.LineName,
+                        detectRecords[i].DetectTime, detectRecords[i].Length, detectRecords[i].Start_Loc, detectRecords[i].Stop_Loc, detect_device.DetectDeviceName));
+                }));
+            }
+        }
+        public void GetDataList_DataTab()
+        {
+            Thread get_data_list_thread = new Thread(GetDataList_t_DataTab);
+            get_data_list_thread.Start();
+        }
+
+        private void GetDataList_t_DataTab()
+        {
+            MetroTunnelDB Database = new MetroTunnelDB();
+            List<libMetroTunnelDB.DataConv> datas = new List<DataConv>();
+            List<libMetroTunnelDB.DataOverview> dataOverviews = new List<DataOverview>();
+            if (selected_record_datatab == null)
+                return;
+            QueryFrom = 0;
+            Dispatcher.Invoke(new Action(() =>
+            {
+                Data_List_DataTab.Items.Clear();
+            }));
+            try
+            {
+                Database.QueryDataConv(ref datas, Convert.ToInt32(selected_record_datatab.RecordNum), QueryFrom_datatab, maxQuery);
+                Database.QueryDataOverview(ref dataOverviews, Convert.ToInt32(selected_record_datatab.RecordNum), QueryFrom_datatab, maxQuery);
+                QueryFrom += maxQuery;
+            }
+            catch (SystemException)
+            {
+                return;
+            }
+            for (int i = 0; i < datas.Count; i++)
+            {
+                Dispatcher.Invoke(new Action(() =>
+                {
+                    Data_List_DataTab.Items.Add(new DataListItem(dataOverviews[i].Distance, dataOverviews[i].LongAxis, dataOverviews[i].ShortAxis
+                        , dataOverviews[i].HorizontalAxis, dataOverviews[i].Rotation, dataOverviews[i].Constriction, dataOverviews[i].Crack));
+                }));
+            }
+            Dispatcher.Invoke(new Action(() =>
+            {
+                Data_List_DataTab.Items.Add(new DataListItem("..."));
+            }));
+        }
+
+        public void GetMoreData_DataTab()
+        {
+            Thread get_more_data_thread = new Thread(GetMoreData_t_DataTab);
+            get_more_data_thread.Start();
+        }
+
+        private void GetMoreData_t_DataTab()
+        {
+            MetroTunnelDB Database = new MetroTunnelDB();
+            List<libMetroTunnelDB.DataConv> datas = new List<DataConv>();
+            if (selected_record == null)
+                return;
+            try
+            {
+                Database.QueryDataConv(ref datas, Convert.ToInt32(selected_record.RecordNum), QueryFrom, maxQuery);
+                QueryFrom += maxQuery;
+            }
+            catch (SystemException)
+            {
+                return;
+            }
+            Dispatcher.Invoke(new Action(() =>
+            {
+                Data_List.Items.RemoveAt(Data_List.Items.Count - 1);
+            }));
+            for (int i = 0; i < datas.Count; i++)
+            {
+                Dispatcher.Invoke(new Action(() =>
+                {
+                    Data_List.Items.Add(new DataListItem(datas[i].Distance, 0, 0, 0, 0, false, false));
+                }));
+            }
+            Dispatcher.Invoke(new Action(() =>
+            {
+                Data_List.Items.Add(new DataListItem("..."));
+            }));
+        }
+
+        private void Line_List_View_Button_DataTab_Click(object sender, RoutedEventArgs e)
+        {
+            ShowLineList_DataTab();
+        }
+
+        private void Record_List_View_Button_DataTab_Click(object sender, RoutedEventArgs e)
+        {
+            ShowRecordList_DataTab();
+        }
+
+        private void Data_List_View_Button_DataTab_Click(object sender, RoutedEventArgs e)
+        {
+            ShowDataList_DataTab();
+        }
+
+        private void Reset_All_Button_DataTab_Click(object sender, RoutedEventArgs e)
+        {
+            ResetDatePicker_DataTab();
+        }
+
+        private void ResetDatePicker_DataTab()
+        {
+            try
+            {
+                MetroTunnelDB Database = new MetroTunnelDB();
+                Database.GetMaxMinDetectRecordTime(ref start_date, ref end_date);
+                Dispatcher.Invoke(new Action(() =>
+                {
+                    Start_Date_Picker_DataTab.DisplayDateStart = start_date;
+                    Start_Date_Picker_DataTab.DisplayDateEnd = end_date;
+                    End_Date_Picker_DataTab.DisplayDateStart = start_date;
+                    End_Date_Picker_DataTab.DisplayDateEnd = end_date;
+                    Start_Date_Picker_DataTab.SelectedDate = start_date;
+                    End_Date_Picker_DataTab.SelectedDate = end_date;
+                }));
+                selected_line_datatab = null;
+                selected_record_datatab = null;
+                selected_data_datatab = null;
+                RefreshSelectedConditionText_DataTab();
+            }
+            catch (System.Exception)
+            {
+                ;
+            }
+
+        }
+
+        private void Start_Date_Picker_DataTab_Changed(object sender, RoutedEventArgs e)
+        {
+            start_date_datatab = (DateTime)Start_Date_Picker_DataTab.SelectedDate;
+        }
+
+        private void End_Date_Picker_DataTab_Changed(object sender, RoutedEventArgs e)
+        {
+            end_date_datatab = ((DateTime)End_Date_Picker_DataTab.SelectedDate).AddDays(1);
+        }
+
+        private void Search_Record_Button_DataTab_Click(object sender, RoutedEventArgs e)
+        {
+            ShowRecordList_DataTab();
+        }
+
+        public void RefreshSelectedConditionText_DataTab()
+        {
+            String text_str = "当前选项: ";
+            if (selected_line_datatab != null)
+            {
+                text_str += selected_line_datatab.LineName;
+            }
+            if (selected_record_datatab != null)
+            {
+                text_str += "  " + selected_record_datatab.CreateTime;
+            }
+            if (selected_data_datatab != null)
+            {
+                text_str += "  " + selected_data_datatab.DataLoc;
+            }
+
+            Dispatcher.Invoke(new Action(() =>
+            {
+                Selected_Condition_Text_DataTab.Text = text_str;
+            }));
+        }
+
+        private void Line_List_Item_DataTab_DoubleClick(object sender, RoutedEventArgs e)
+        {
+            selected_line_datatab = Line_List_DataTab.SelectedItem as LineListItem;
+            RefreshSelectedConditionText_DataTab();
+            ShowRecordList_DataTab();
+        }
+
+        private void Record_List_Item_DataTab_DoubleClick(object sender, RoutedEventArgs e)
+        {
+            selected_record_datatab = Record_List_DataTab.SelectedItem as RecordListItem;
+            RefreshSelectedConditionText_DataTab();
+            ShowDataList_DataTab();
+        }
+
+        private void Data_List_Item_DataTab_DoubleClick(object sender, RoutedEventArgs e)
+        {
+            MetroTunnelDB Database = new MetroTunnelDB();
+            selected_data_datatab = Data_List_DataTab.SelectedItem as DataListItem;
+            if (selected_data_datatab.DataLoc == "...")
+            {
+                GetMoreData_DataTab();
+            }
+            else
+            {
+                RefreshSelectedConditionText_DataTab();
+                if (selected_record == null)
+                    return;
+                // visualize info
+                try
+                {
+                    // Get alive camera index
+                    List<int> cam_alive = new List<int>();
+                    Database.GetAliveCamEnc(Convert.ToInt32(selected_record_datatab.RecordNum), ref cam_alive);
+                    // Get frame interval
+                    int interval = Database.GetFrameIntervalEnc(Convert.ToInt32(selected_record_datatab.RecordNum), cam_alive[0]);
+                    if (interval == 0)
+                        return;
+                    int max_interval = (int)(interval * 1.5);
+                    List<libMetroTunnelDB.DataConv> data_conv_list = new List<DataConv>();
+                    Database.QueryDataConv(ref data_conv_list, Convert.ToInt32(selected_record_datatab.RecordNum),
+                        Convert.ToSingle(selected_data_datatab.DataLoc), Convert.ToSingle(selected_data_datatab.DataLoc));
+                    if (data_conv_list.Count >= 1)
+                    {
+                        ShowSectionImage_DataTab(data_conv_list[0]);
+                        ShowDetail_DataTab(selected_data_datatab);
+                    }                    
+                }
+                catch (System.Exception)
+                {
+                    return;
+                }
+
+            }
+
+        }
+
+        // Preview Area
+
+        public const int section_view_width_datatab = 320;
+        public const int section_view_height_datatab = 320;
+        public const int section_view_cx_datatab = section_view_width_datatab / 2;
+        public const int section_view_cy_datatab = section_view_height_datatab / 2;
+        public const int zoom_rate_datatab = 20;
+
+        public void ShowSectionImage_DataTab(libMetroTunnelDB.DataConv dataConv)
+        {
+            // Generate 2D image
+            Bitmap bmp = new Bitmap(section_view_width_datatab, section_view_height_datatab);
+            Graphics g_bmp = Graphics.FromImage(bmp);
+            g_bmp.Clear(System.Drawing.Color.Gray);
+            for (int i = 0; i < libMetroTunnelDB.DataConv.floatArrLength; i++)
+            {
+                if (i % downsample_rate == 0)
+                {
+                    float a_rotate = (float)(270 * Math.PI / 180 - dataConv.a[i]);
+                    int px = section_view_cx_datatab + (int)(dataConv.s[i] * Math.Cos(a_rotate) / zoom_rate_datatab);
+                    int py = section_view_cy_datatab - (int)(dataConv.s[i] * Math.Sin(a_rotate) / zoom_rate_datatab);
+                    if (px > 0 && py > 0 && px < section_view_width_datatab && py < section_view_height_datatab)
+                        bmp.SetPixel(px, py, System.Drawing.Color.Blue);
+                }
+            }
+
+            BitmapSource bmpSource = Imaging.CreateBitmapSourceFromHBitmap(bmp.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+            Section_Image_DataTab.Source = bmpSource;
+        }      
+
+        public void ShowDetail_DataTab(DataListItem dataitem)
+        {
+            Section_Detail_List_DataTab.Items.Clear();
+            Section_Detail_List_DataTab.Items.Add(String.Format("里程位置: \n {0}", dataitem.DataLoc));
+            Section_Detail_List_DataTab.Items.Add(String.Format("截面长轴: \n {0} mm", dataitem.LongAxis));
+            Section_Detail_List_DataTab.Items.Add(String.Format("截面短轴: \n {0} mm", dataitem.ShortAxis));
+            Section_Detail_List_DataTab.Items.Add(String.Format("是否收敛: \n {0}", dataitem.Constriction));
+            Section_Detail_List_DataTab.Items.Add(String.Format("存在裂缝: \n {0}", dataitem.Crack));
+            Section_Detail_List_DataTab.Items.Add(String.Format("水平轴: \n {0} mm", dataitem.HorizontalAxis));
+            Section_Detail_List_DataTab.Items.Add(String.Format("滚转角: \n {0}°", dataitem.Rotation));
+        }
+
 
     }
 

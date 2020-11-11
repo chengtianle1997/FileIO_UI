@@ -13,6 +13,7 @@
     <None Remove="edit_icon.jpg" />
     <None Remove="edit_icon.png" />
     <None Remove="sample.jpg" />
+    <None Remove="sample2d_2x.jpg" />
     <None Remove="sample_2d.jpg" />
   </ItemGroup>
 
@@ -39,6 +40,7 @@
       <CopyToOutputDirectory></CopyToOutputDirectory>
     </Resource>
     <Resource Include="sample.jpg" />
+    <Resource Include="sample2d_2x.jpg" />
     <Resource Include="sample_2d.jpg" />
   </ItemGroup>
 

@@ -119,5 +119,15 @@ namespace FileIO_UI {
                 return ((byte[])(obj));
             }
         }
+        
+        /// <summary>
+        ///   查找 System.Drawing.Bitmap 类型的本地化资源。
+        /// </summary>
+        public static System.Drawing.Bitmap sample2d_2x {
+            get {
+                object obj = ResourceManager.GetObject("sample2d_2x", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
     }
 }

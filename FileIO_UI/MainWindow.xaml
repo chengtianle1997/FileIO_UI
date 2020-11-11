@@ -27,6 +27,21 @@
             <EventSetter Event="MouseDoubleClick" Handler="Data_List_Item_DoubleClick"></EventSetter>
         </Style>
 
+        <Style x:Key="LineListItemStyle_DataTab" TargetType="{x:Type ListViewItem}">
+            <Setter Property="HorizontalContentAlignment" Value="Center"></Setter>
+            <EventSetter Event="MouseDoubleClick" Handler="Line_List_Item_DataTab_DoubleClick"></EventSetter>
+        </Style>
+
+        <Style x:Key="RecordListItemStyle_DataTab" TargetType="{x:Type ListViewItem}">
+            <Setter Property="HorizontalContentAlignment" Value="Center"></Setter>
+            <EventSetter Event="MouseDoubleClick" Handler="Record_List_Item_DataTab_DoubleClick"></EventSetter>
+        </Style>
+
+        <Style x:Key="DataListItemStyle_DataTab" TargetType="{x:Type ListViewItem}">
+            <Setter Property="HorizontalContentAlignment" Value="Center"></Setter>
+            <EventSetter Event="MouseDoubleClick" Handler="Data_List_Item_DataTab_DoubleClick"></EventSetter>
+        </Style>
+
     </Window.Resources>
     <Viewbox Stretch="Fill">
         <DockPanel Width="1450" Height="850">
@@ -232,7 +247,7 @@
                             <TextBlock Name="SubPBarInfo" HorizontalAlignment="Left" Margin="28,678,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Row="1" Width="315" Grid.ColumnSpan="6"><Run Language="zh-cn" Text="子"/><Run Text="进度"/></TextBlock>
                             <TextBlock HorizontalAlignment="Left" Margin="191,677,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Row="1" Width="53" Grid.Column="5" Height="17"><Run Name="SubPbarText" Text="0"></Run><Run Text="%"/></TextBlock>
                             <TextBlock HorizontalAlignment="Left" Margin="301,588,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Row="1" Grid.Column="5"><Run Language="zh-cn" Text="日志列表"/></TextBlock>
-                            <Image Name="Cam1_Image" Grid.Column="5" HorizontalAlignment="Left" Height="96" Margin="759,11,0,0" VerticalAlignment="Top" Width="121" Grid.Row="1" Source="/sample.jpg"/>
+                            <Image Name="Cam1_Image" Grid.Column="5" HorizontalAlignment="Left" Height="96" Margin="759,11,0,0" VerticalAlignment="Top" Width="121" Grid.Row="1" Source="sample.jpg"/>
                             <TextBlock HorizontalAlignment="Left" Margin="752,23,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="5"><Run FontWeight="Bold" FontSize="14" Text="数据"/><Run FontWeight="Bold" FontSize="14" Language="zh-cn" Text="可视化预览"/></TextBlock>
                             <TextBlock HorizontalAlignment="Left" Margin="759,48,0,760" TextWrapping="Wrap" Grid.Column="5" Grid.RowSpan="2"><Run Language="zh-cn" Text="Cam 1"/></TextBlock>
                             <Image Name="Cam2_Image" Grid.Column="5" HorizontalAlignment="Left" Height="96" Margin="919,11,0,0" VerticalAlignment="Top" Width="121" Grid.Row="1" Source="sample.jpg"/>
@@ -274,11 +289,85 @@
                             </Grid.ColumnDefinitions>
                             <TextBlock HorizontalAlignment="Left" Margin="4,16,0,786" TextWrapping="Wrap" Grid.ColumnSpan="2" Grid.Column="1"><Run FontWeight="Bold" FontSize="14" Text="数据选择"/><Run FontWeight="Bold" FontSize="14" Language="zh-cn" Text="区"/></TextBlock>
                             <TextBlock HorizontalAlignment="Left" Margin="6,42,0,766" TextWrapping="Wrap" Grid.Column="1" Grid.ColumnSpan="2"><Run Language="zh-cn" Text="时间范围"/></TextBlock>
-                            <DatePicker x:Name="Start_Date_Picker_DataTab" Grid.Column="1" HorizontalAlignment="Left" Margin="6,62,0,0" VerticalAlignment="Top" Width="135" Grid.ColumnSpan="2"/>
-                            <TextBlock HorizontalAlignment="Left" Margin="138,66,0,742" TextWrapping="Wrap" Grid.Column="2"><Run Language="zh-cn" Text="到"/></TextBlock>
-                            <DatePicker x:Name="End_Date_Picker_DataTab" Grid.Column="2" HorizontalAlignment="Left" Margin="161,62,0,0" VerticalAlignment="Top" Width="135"/>
-                            <Button x:Name="Search_Record_Button_DataTab" Content="查询记录" HorizontalAlignment="Left" Margin="311,64,0,0" VerticalAlignment="Top" Grid.Column="2" Width="72" Click="Search_Record_Button_Click"/>
-                            <Button x:Name="Reset_All_Button_DataTab" Content="重置所有" HorizontalAlignment="Left" Margin="311,36,0,0" VerticalAlignment="Top" Grid.Column="2" Width="72" Click="Search_Record_Button_Click"/>
+                            <DatePicker x:Name="Start_Date_Picker_DataTab" Grid.Column="1" HorizontalAlignment="Left" Margin="6,62,0,0" VerticalAlignment="Top" Width="165" Grid.ColumnSpan="2" SelectedDateChanged="Start_Date_Picker_DataTab_Changed"/>
+                            <TextBlock HorizontalAlignment="Left" Margin="168,66,0,742" TextWrapping="Wrap" Grid.Column="2"><Run Language="zh-cn" Text="到"/></TextBlock>
+                            <DatePicker x:Name="End_Date_Picker_DataTab" Grid.Column="2" HorizontalAlignment="Left" Margin="191,62,0,0" VerticalAlignment="Top" Width="165" SelectedDateChanged="End_Date_Picker_DataTab_Changed"/>
+                            <Button x:Name="Search_Record_Button_DataTab" Content="查询记录" HorizontalAlignment="Left" Margin="371,75,0,0" VerticalAlignment="Top" Grid.Column="2" Width="72" Click="Search_Record_Button_DataTab_Click"/>
+                            <Button x:Name="Reset_All_Button_DataTab" Content="重置所有" HorizontalAlignment="Left" Margin="371,103,0,0" VerticalAlignment="Top" Grid.Column="2" Width="72" Click="Reset_All_Button_DataTab_Click"/>
+                            <TextBlock HorizontalAlignment="Left" Margin="6,95,0,713" TextWrapping="Wrap" Grid.Column="1" Grid.ColumnSpan="2"><Run Language="zh-cn" Text="里程"/><Run Text="范围"/></TextBlock>
+                            <TextBox x:Name="Detect_Distance_Text_Copy" HorizontalAlignment="Left" Margin="8,115,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Width="160" Grid.Column="1" Grid.ColumnSpan="2" Height="19"/>
+                            <TextBlock HorizontalAlignment="Left" Margin="168,117,0,691" TextWrapping="Wrap" Grid.Column="2"><Run Language="zh-cn" Text="到"/></TextBlock>
+                            <TextBox x:Name="Detect_Distance_Text_Copy1" HorizontalAlignment="Left" Margin="192,115,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Width="160" Grid.Column="2" Height="19"/>
+                            <Slider x:Name="Distance_Slider" Grid.Column="1" HorizontalAlignment="Left" Margin="6,156,0,0" VerticalAlignment="Top" Width="449" Grid.ColumnSpan="2" Height="19" Maximum="1000" Minimum="0" TickFrequency="0.1"/>
+                            <TextBlock HorizontalAlignment="Left" Margin="8,193,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="1" Grid.ColumnSpan="2"><Run Language="zh-cn" Text="视图选择"/></TextBlock>
+                            <Button x:Name="Line_List_View_Button_DataTab" Background="#FFDDDDDD" Content="线路表" HorizontalAlignment="Left" Margin="0,223,0,0" VerticalAlignment="Top" Grid.Column="2" Width="110" Click="Line_List_View_Button_DataTab_Click"/>
+                            <Button x:Name="Record_List_View_Button_DataTab" Background="#AF535353" Content="记录表" HorizontalAlignment="Left" Margin="139,223,0,0" VerticalAlignment="Top" Grid.Column="2" Width="110" Click="Record_List_View_Button_DataTab_Click"/>
+                            <Button x:Name="Data_List_View_Button_DataTab" Background="#FFDDDDDD" Content="数据表" HorizontalAlignment="Left" Margin="275,223,0,0" VerticalAlignment="Top" Grid.Column="2" Width="110" Click="Data_List_View_Button_DataTab_Click"/>
+
+                            <ListView Name="Line_List_DataTab" Margin="0,284,0,0" HorizontalAlignment="Left" Width="443" Height="511" VerticalAlignment="Top" Grid.Row="1" Grid.Column="5"
+                                      ScrollViewer.HorizontalScrollBarVisibility="Auto" 
+                                      ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                      HorizontalContentAlignment="Center"
+                                      ItemContainerStyle="{StaticResource ResourceKey=LineListItemStyle_DataTab}"
+                                      Visibility="Hidden">
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn Header="编号" Width="40" DisplayMemberBinding="{Binding LineNum}"></GridViewColumn>
+                                        <GridViewColumn Header="线路名称" Width="120" DisplayMemberBinding="{Binding LineName}"></GridViewColumn>
+                                        <GridViewColumn Header="总里程" Width="60" DisplayMemberBinding="{Binding TotalMileage}"></GridViewColumn>
+                                        <GridViewColumn Header="创建时间" Width="140" DisplayMemberBinding="{Binding CreateTime}"></GridViewColumn>
+                                    </GridView>
+                                </ListView.View>
+                            </ListView>
+
+                            <ListView Name="Record_List_DataTab" Margin="0,284,0,0" HorizontalAlignment="Left" Width="443" Height="511" VerticalAlignment="Top" Grid.Column="2"
+                                      ScrollViewer.HorizontalScrollBarVisibility="Auto" 
+                                      ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                      HorizontalContentAlignment="Center"
+                                      ItemContainerStyle="{StaticResource ResourceKey=RecordListItemStyle_DataTab}"
+                                      Visibility="Visible">
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn Header="编号" Width="40" DisplayMemberBinding="{Binding RecordNum}"></GridViewColumn>
+                                        <GridViewColumn Header="检测线路" Width="125" DisplayMemberBinding="{Binding LineName}"></GridViewColumn>
+                                        <GridViewColumn Header="检测时间" Width="130" DisplayMemberBinding="{Binding CreateTime}"></GridViewColumn>
+                                        <GridViewColumn Header="检测里程" Width="60" DisplayMemberBinding="{Binding DetectDistance}"></GridViewColumn>
+                                        <GridViewColumn Header="起点里程" Width="60" DisplayMemberBinding="{Binding StartLoc}"></GridViewColumn>
+                                        <GridViewColumn Header="终点里程" Width="60" DisplayMemberBinding="{Binding StopLoc}"></GridViewColumn>
+                                        <GridViewColumn Header="检测设备" Width="140" DisplayMemberBinding="{Binding DeviceName}"></GridViewColumn>
+                                    </GridView>
+                                </ListView.View>
+                            </ListView>
+
+                            <ListView Name="Data_List_DataTab" Margin="0,284,0,0" HorizontalAlignment="Left" Width="443" Height="511" VerticalAlignment="Top" Grid.Row="1" Grid.Column="5"
+                                      ScrollViewer.HorizontalScrollBarVisibility="Auto" 
+                                      ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                      HorizontalContentAlignment="Center"
+                                      ItemContainerStyle="{StaticResource ResourceKey=DataListItemStyle_DataTab}"
+                                      Visibility="Hidden">
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn Header="里程位置" Width="90" DisplayMemberBinding="{Binding DataLoc}"></GridViewColumn>
+                                        <GridViewColumn Header="截面长轴" Width="70" DisplayMemberBinding="{Binding LongAxis}"></GridViewColumn>
+                                        <GridViewColumn Header="截面短轴" Width="70" DisplayMemberBinding="{Binding ShortAxis}"></GridViewColumn>
+                                        <GridViewColumn Header="是否收敛" Width="60" DisplayMemberBinding="{Binding Constriction}"></GridViewColumn>
+                                        <GridViewColumn Header="存在裂缝" Width="60" DisplayMemberBinding="{Binding Crack}"></GridViewColumn>
+                                        <GridViewColumn Header="水平轴" Width="70" DisplayMemberBinding="{Binding HorizontalAxis}"></GridViewColumn>
+                                        <GridViewColumn Header="滚转角" Width="60" DisplayMemberBinding="{Binding Rotation}"></GridViewColumn>
+                                    </GridView>
+                                </ListView.View>
+                            </ListView>
+
+                            <TextBlock x:Name="Selected_Condition_Text_DataTab" HorizontalAlignment="Left" Margin="10,256,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="1" Width="431" Text="当前选项:" Height="20" Grid.ColumnSpan="2"/>
+                            <TextBlock HorizontalAlignment="Left" Margin="265,180,0,622" TextWrapping="Wrap" Grid.Column="2" Width="178" Block.TextAlignment="Right" FontSize="16" Text="{Binding Path=Value, ElementName=Distance_Slider, StringFormat={}{0:#,0.00}}"></TextBlock>
+                            <Image Name="Section_Image_DataTab" HorizontalAlignment="Left" Height="650" Margin="489,140,0,0" VerticalAlignment="Top" Width="650" Source="sample2d_2x.jpg" Grid.Column="2"/>
+                            <TextBlock HorizontalAlignment="Left" Margin="489,16,0,786" TextWrapping="Wrap" Grid.Column="2"><Run FontWeight="Bold" FontSize="14" Text="数据预览区"/></TextBlock>
+                            <ListBox x:Name="Section_Detail_List_DataTab" Margin="1161,140,0,0" Height="650" VerticalAlignment="Top" HorizontalAlignment="Left" Width="224" Grid.Column="2"/>
+                            <Button x:Name="Search_Record_Button_DataTab_Copy" Content="框选采样" HorizontalAlignment="Left" Margin="657,56,0,0" VerticalAlignment="Top" Grid.Column="2" Width="72" Click="Search_Record_Button_Click"/>
+                            <Button x:Name="Search_Record_Button_DataTab_Copy1" Content="单点采样" HorizontalAlignment="Left" Margin="572,56,0,0" VerticalAlignment="Top" Grid.Column="2" Width="72" Click="Search_Record_Button_Click"/>
+                            <Button x:Name="Search_Record_Button_DataTab_Copy2" Content="距离标尺" HorizontalAlignment="Left" Margin="744,56,0,0" VerticalAlignment="Top" Grid.Column="2" Width="72" Click="Search_Record_Button_Click"/>
+                            <Button x:Name="Search_Record_Button_DataTab_Copy3" Content="预览模式" HorizontalAlignment="Left" Margin="487,56,0,0" VerticalAlignment="Top" Grid.Column="2" Width="72" Click="Search_Record_Button_Click"/>
+                            <TextBlock x:Name="Selected_Condition_Text_Copy1" HorizontalAlignment="Left" Margin="489,100,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="2" Width="421" Text="当前选项:" Height="20"/>
                         </Grid>
                     </TabItem>
                 </TabControl>
