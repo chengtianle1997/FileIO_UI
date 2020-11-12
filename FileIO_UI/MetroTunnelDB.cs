@@ -1612,7 +1612,7 @@ namespace libMetroTunnelDB
                     }
                     else
                     {
-                        imageDisp = new ImageDisp(record_id, Convert.ToSingle(time_base));
+                        imageDisp = new ImageDisp(record_id, Convert.ToDouble(time_base));
                     }
 
                     // Save the data from base camera

@@ -1226,11 +1226,11 @@ namespace FileIO_UI
                     // Find nearest imagedisp
                     List<libMetroTunnelDB.ImageDisp> image_url_list = new List<ImageDisp>();
                     Database.QueryImageDisp(ref image_url_list, Convert.ToInt32(selected_record.RecordNum), 
-                        Convert.ToInt32(selected_data.DataLoc) - interval, Convert.ToSingle(selected_data.DataLoc) + interval);
+                        Convert.ToDouble(selected_data.DataLoc) - interval, Convert.ToDouble(selected_data.DataLoc) + interval);
                     
                     List<libMetroTunnelDB.DataConv> data_conv_list = new List<DataConv>();
                     Database.QueryDataConv(ref data_conv_list, Convert.ToInt32(selected_record.RecordNum), 
-                        Convert.ToSingle(selected_data.DataLoc), Convert.ToSingle(selected_data.DataLoc));
+                        Convert.ToDouble(selected_data.DataLoc), Convert.ToDouble(selected_data.DataLoc));
                     if (data_conv_list.Count >= 1)
                     {
                         ShowSectionImage(data_conv_list[0]);
@@ -1647,15 +1647,15 @@ namespace FileIO_UI
             try
             {
                 MetroTunnelDB Database = new MetroTunnelDB();
-                Database.GetMaxMinDetectRecordTime(ref start_date, ref end_date);
+                Database.GetMaxMinDetectRecordTime(ref start_date_datatab, ref end_date_datatab);
                 Dispatcher.Invoke(new Action(() =>
                 {
-                    Start_Date_Picker_DataTab.DisplayDateStart = start_date;
-                    Start_Date_Picker_DataTab.DisplayDateEnd = end_date;
-                    End_Date_Picker_DataTab.DisplayDateStart = start_date;
-                    End_Date_Picker_DataTab.DisplayDateEnd = end_date;
-                    Start_Date_Picker_DataTab.SelectedDate = start_date;
-                    End_Date_Picker_DataTab.SelectedDate = end_date;
+                    Start_Date_Picker_DataTab.DisplayDateStart = start_date_datatab;
+                    Start_Date_Picker_DataTab.DisplayDateEnd = end_date_datatab;
+                    End_Date_Picker_DataTab.DisplayDateStart = start_date_datatab;
+                    End_Date_Picker_DataTab.DisplayDateEnd = end_date_datatab;
+                    Start_Date_Picker_DataTab.SelectedDate = start_date_datatab;
+                    End_Date_Picker_DataTab.SelectedDate = end_date_datatab;
                 }));
                 selected_line_datatab = null;
                 selected_record_datatab = null;
@@ -1731,7 +1731,7 @@ namespace FileIO_UI
             else
             {
                 RefreshSelectedConditionText_DataTab();
-                if (selected_record == null)
+                if (selected_record_datatab == null)
                     return;
                 // visualize info
                 try
@@ -1746,7 +1746,7 @@ namespace FileIO_UI
                     int max_interval = (int)(interval * 1.5);
                     List<libMetroTunnelDB.DataConv> data_conv_list = new List<DataConv>();
                     Database.QueryDataConv(ref data_conv_list, Convert.ToInt32(selected_record_datatab.RecordNum),
-                        Convert.ToSingle(selected_data_datatab.DataLoc), Convert.ToSingle(selected_data_datatab.DataLoc));
+                        Convert.ToDouble(selected_data_datatab.DataLoc), Convert.ToDouble(selected_data_datatab.DataLoc));
                     if (data_conv_list.Count >= 1)
                     {
                         ShowSectionImage_DataTab(data_conv_list[0]);
