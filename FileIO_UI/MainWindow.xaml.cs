@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Linq;
 using System.Threading;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -40,8 +41,11 @@ namespace FileIO_UI
                 Application.Current.Shutdown();
                 return;
             }
-                
-            
+
+            MouseDown += DataTab_MouseDown;
+            MouseMove += DataTab_MouseMove;
+            MouseUp += DataTab_MouseUp;
+
             DebugWriteLine("程序初始化完成");
 
             // Update UI
@@ -1762,29 +1766,93 @@ namespace FileIO_UI
 
         }
 
-        // Preview Area
+        // Preview area
+        // Preview area button controller
+        // mode 0: preview, mode 1: single point, mode 2: rectangle box, mode 3: ruler
+        public static int datatab_mode_index = 0;
 
-        public const int section_view_width_datatab = 320;
-        public const int section_view_height_datatab = 320;
+        private void Preview_Mode_Button_Click(object sender, RoutedEventArgs e)
+        {
+            datatab_mode_index = 0;
+            Preview_Mode_Button.Background = SelectedColor;
+            Single_Point_Mode_Button.Background = UnSelectedColor;
+            Rectangle_Box_Mode_Button.Background = UnSelectedColor;
+            Ruler_Mode_Button.Background = UnSelectedColor;
+        }
+        private void Single_Point_Mode_Button_Click(object sender, RoutedEventArgs e)
+        {
+            datatab_mode_index = 1;
+            Preview_Mode_Button.Background = UnSelectedColor;
+            Single_Point_Mode_Button.Background = SelectedColor;
+            Rectangle_Box_Mode_Button.Background = UnSelectedColor;
+            Ruler_Mode_Button.Background = UnSelectedColor;
+        }
+        private void Rectangle_Box_Mode_Button_Click(object sender, RoutedEventArgs e)
+        {
+            datatab_mode_index = 2;
+            Preview_Mode_Button.Background = UnSelectedColor;
+            Single_Point_Mode_Button.Background = UnSelectedColor;
+            Rectangle_Box_Mode_Button.Background = SelectedColor;
+            Ruler_Mode_Button.Background = UnSelectedColor;
+        }
+        private void Ruler_Mode_Button_Click(object sender, RoutedEventArgs e)
+        {
+            datatab_mode_index = 3;
+            Preview_Mode_Button.Background = UnSelectedColor;
+            Single_Point_Mode_Button.Background = UnSelectedColor;
+            Rectangle_Box_Mode_Button.Background = UnSelectedColor;
+            Ruler_Mode_Button.Background = SelectedColor;
+        }
+
+        // Preview area content
+        public const int section_view_width_datatab = 650;
+        public const int section_view_height_datatab = 650;
         public const int section_view_cx_datatab = section_view_width_datatab / 2;
         public const int section_view_cy_datatab = section_view_height_datatab / 2;
-        public const int zoom_rate_datatab = 20;
+        public const int zoom_rate_datatab = 10;
+        public const int downsample_rate_datatab = 4;
+
+        public LLRBTree tree = new LLRBTree();
+
+        public List<System.Drawing.Point> point_click = new List<System.Drawing.Point>();
+
+        Bitmap bmp = new Bitmap(section_view_width_datatab, section_view_height_datatab);
+
+        System.Drawing.Pen LinePen = new System.Drawing.Pen(System.Drawing.Color.Red, 2);
+
+        public float GetRealAngle(double px, double py)
+        {
+            double rx = px - section_view_cx_datatab;
+            double ry = section_view_cy_datatab - py;
+            double acos = Math.Acos(rx / (Math.Sqrt(rx * rx + ry * ry)));
+            if (ry >= 0)
+            {
+                return (float)acos;
+            }
+            else
+            {
+                return (float)(2 * Math.PI - acos);
+            }
+        }
 
         public void ShowSectionImage_DataTab(libMetroTunnelDB.DataConv dataConv)
         {
-            // Generate 2D image
-            Bitmap bmp = new Bitmap(section_view_width_datatab, section_view_height_datatab);
+            // Generate 2D image           
             Graphics g_bmp = Graphics.FromImage(bmp);
             g_bmp.Clear(System.Drawing.Color.Gray);
             for (int i = 0; i < libMetroTunnelDB.DataConv.floatArrLength; i++)
             {
-                if (i % downsample_rate == 0)
+                if (i % downsample_rate_datatab == 0)
                 {
+                    if (dataConv.s[i] == 0)
+                        continue;
                     float a_rotate = (float)(270 * Math.PI / 180 - dataConv.a[i]);
                     int px = section_view_cx_datatab + (int)(dataConv.s[i] * Math.Cos(a_rotate) / zoom_rate_datatab);
                     int py = section_view_cy_datatab - (int)(dataConv.s[i] * Math.Sin(a_rotate) / zoom_rate_datatab);
                     if (px > 0 && py > 0 && px < section_view_width_datatab && py < section_view_height_datatab)
                         bmp.SetPixel(px, py, System.Drawing.Color.Blue);
+                    float ra = GetRealAngle((double)px, (double)py);
+                    tree.put(ra, px, py, dataConv.s[i]);
                 }
             }
 
@@ -1804,7 +1872,43 @@ namespace FileIO_UI
             Section_Detail_List_DataTab.Items.Add(String.Format("滚转角: \n {0}°", dataitem.Rotation));
         }
 
+        public void DataTab_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            System.Windows.Point downpoint = e.GetPosition(Section_Image_DataTab);
+            if (datatab_mode_index == 1)
+            {
+                if (tree.root == null)
+                    return;
+                Section_Detail_List_DataTab.Items.Clear();
+                Section_Detail_List_DataTab.Items.Add(String.Format("点位置：{0}mm，{1}mm", 
+                    ((downpoint.X - section_view_cx_datatab) * zoom_rate_datatab).ToString("#.00"), ((section_view_cy_datatab - downpoint.Y) * zoom_rate_datatab).ToString("#.00")));
+                Section_Detail_List_DataTab.Items.Add(String.Format("相对角度：{0}", GetRealAngle(downpoint.X, downpoint.Y) * 180 / Math.PI));
+                LLRBTree.Point point_oncloud = tree.floor(GetRealAngle(downpoint.X, downpoint.Y));
+                Bitmap bmp_copy = (Bitmap)bmp.Clone();
+                BitmapSource bmpSource;
+                if (point_oncloud == null)
+                {
+                    bmpSource = Imaging.CreateBitmapSourceFromHBitmap(bmp_copy.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                    Section_Image_DataTab.Source = bmpSource;
+                    return;
+                }
+                Section_Detail_List_DataTab.Items.Add(String.Format("距离：{0}", point_oncloud.s));              
+                Graphics g_bmp = Graphics.FromImage(bmp_copy);
+                g_bmp.DrawLine(LinePen, new PointF(section_view_cx_datatab, section_view_cy_datatab), new PointF(point_oncloud.x, point_oncloud.y));
+                bmpSource = Imaging.CreateBitmapSourceFromHBitmap(bmp_copy.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                Section_Image_DataTab.Source = bmpSource;
+            }          
+        }
 
+        public void DataTab_MouseMove(object sender, MouseEventArgs e)
+        {
+            System.Windows.Point downpoint = e.GetPosition(Section_Image_DataTab);
+        }
+
+        public void DataTab_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            System.Windows.Point downpoint = e.GetPosition(Section_Image_DataTab);
+        }
     }
 
     public class ImageUrlInput

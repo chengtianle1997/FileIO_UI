@@ -5,9 +5,9 @@ using System.Text;
 
 namespace FileIO_UI
 {
-    class LLRBTree
+    public class LLRBTree
     {
-        Node root = null;
+        public Node root = null;
         List<Node> node_list = new List<Node>();
 
         private const bool RED = true;
@@ -18,15 +18,17 @@ namespace FileIO_UI
             public float key { set; get; }
             public float x_val { set; get; }
             public float y_val { set; get; }
+            public float s_val { set; get; }
             public Node left { set; get; }
             public Node right { set; get; }
             public bool color { set; get; } // color of parent link
 
-            public Node(float _key, float _x_val, float _y_val)
+            public Node(float _key, float _x_val, float _y_val, float _s_val)
             {
                 key = _key;
                 x_val = _x_val;
                 y_val = _y_val;
+                s_val = _s_val;
                 left = null;
                 right = null;
                 color = BLACK;
@@ -37,10 +39,12 @@ namespace FileIO_UI
         {
             public float x { set; get; }
             public float y { set; get; }
-            public Point(float _x, float _y)
+            public float s { set; get; }
+            public Point(float _x, float _y, float _s)
             {
                 x = _x;
                 y = _y;
+                s = _s;
             }
         }
 
@@ -89,31 +93,32 @@ namespace FileIO_UI
                 return 0;
         }
 
-        public void put(float key, float x_val, float y_val)
+        public void put(float key, float x_val, float y_val, float s_val)
         {
-            root = put_p(root, key, x_val, y_val);
+            root = put_p(root, key, x_val, y_val, s_val);
         }
 
-        private Node put_p(Node x, float key, float x_val, float y_val)
+        private Node put_p(Node x, float key, float x_val, float y_val, float s_val)
         {
             if (x == null)
             {
-                return new Node(key, x_val, y_val);
+                return new Node(key, x_val, y_val, s_val);
             }
             int ret = compare(key, x.key);
             if(ret < 0)
             {
-                x.left = put_p(x.left, key, x_val, y_val);
+                x.left = put_p(x.left, key, x_val, y_val, s_val);
             }
             else if (ret > 0)
             {
-                x.right = put_p(x.right, key, x_val, y_val);
+                x.right = put_p(x.right, key, x_val, y_val, s_val);
             }
             else
             {
                 // Update the value
                 x.x_val = x_val;
                 x.y_val = y_val;
+                x.s_val = s_val;
             }
 
             if (isRed(x.right) && !isRed(x.left))
@@ -141,7 +146,7 @@ namespace FileIO_UI
             {
                 return null;
             }
-            Point point = new Point(x.x_val, x.y_val);
+            Point point = new Point(x.x_val, x.y_val, x.s_val);
             return point;
         }
 
@@ -173,6 +178,50 @@ namespace FileIO_UI
                     return x;
                 else
                     return t;
+            }
+        }
+
+        // Find the keys between Kmin and Kmax
+        public List<Point> between(float Kmin, float Kmax)
+        {
+            point_node_list.Clear();
+            between_p(root, Kmin, Kmax);
+            if (point_node_list.Count < 1)
+            {
+                return null;
+            }
+            List<Point> points = new List<Point>();
+            for (int i = 0; i < point_node_list.Count; i++)
+            {
+                points.Add(new Point(point_node_list[i].x_val, point_node_list[i].y_val, point_node_list[i].s_val));
+            }
+            return points;
+        }
+
+        private List<Node> point_node_list = new List<Node>();
+
+        private void between_p(Node x, float Kmin, float Kmax)
+        {
+            if (x == null)
+            {
+                return;
+            }
+            // Case 1: x.key > Kmax, go left
+            if (x.key > Kmax)
+            {
+                between_p(x.left, Kmin, Kmax);
+            }
+            // Case 2: x.key < Kmin, go right
+            else if (x.key < Kmin)
+            {
+                between_p(x.right, Kmin, Kmax);
+            }
+            // Case 3: Kmin <= x.key <= Kmax, save and go both left and right 
+            else
+            {
+                point_node_list.Add(x);
+                between_p(x.left, Kmin, Kmax);
+                between_p(x.right, Kmin, Kmax);
             }
         }
     }

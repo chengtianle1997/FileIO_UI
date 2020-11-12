@@ -363,10 +363,10 @@
                             <Image Name="Section_Image_DataTab" HorizontalAlignment="Left" Height="650" Margin="489,140,0,0" VerticalAlignment="Top" Width="650" Source="sample2d_2x.jpg" Grid.Column="2"/>
                             <TextBlock HorizontalAlignment="Left" Margin="489,16,0,786" TextWrapping="Wrap" Grid.Column="2"><Run FontWeight="Bold" FontSize="14" Text="数据预览区"/></TextBlock>
                             <ListBox x:Name="Section_Detail_List_DataTab" Margin="1161,140,0,0" Height="650" VerticalAlignment="Top" HorizontalAlignment="Left" Width="224" Grid.Column="2"/>
-                            <Button x:Name="Search_Record_Button_DataTab_Copy" Content="框选采样" HorizontalAlignment="Left" Margin="657,56,0,0" VerticalAlignment="Top" Grid.Column="2" Width="72" Click="Search_Record_Button_Click"/>
-                            <Button x:Name="Search_Record_Button_DataTab_Copy1" Content="单点采样" HorizontalAlignment="Left" Margin="572,56,0,0" VerticalAlignment="Top" Grid.Column="2" Width="72" Click="Search_Record_Button_Click"/>
-                            <Button x:Name="Search_Record_Button_DataTab_Copy2" Content="距离标尺" HorizontalAlignment="Left" Margin="744,56,0,0" VerticalAlignment="Top" Grid.Column="2" Width="72" Click="Search_Record_Button_Click"/>
-                            <Button x:Name="Search_Record_Button_DataTab_Copy3" Content="预览模式" HorizontalAlignment="Left" Margin="487,56,0,0" VerticalAlignment="Top" Grid.Column="2" Width="72" Click="Search_Record_Button_Click"/>
+                            <Button x:Name="Rectangle_Box_Mode_Button" Background="#FFDDDDDD" Content="框选采样" HorizontalAlignment="Left" Margin="657,56,0,0" VerticalAlignment="Top" Grid.Column="2" Width="72" Click="Rectangle_Box_Mode_Button_Click"/>
+                            <Button x:Name="Single_Point_Mode_Button" Background="#FFDDDDDD" Content="单点采样" HorizontalAlignment="Left" Margin="572,56,0,0" VerticalAlignment="Top" Grid.Column="2" Width="72" Click="Single_Point_Mode_Button_Click"/>
+                            <Button x:Name="Ruler_Mode_Button" Background="#FFDDDDDD" Content="距离标尺" HorizontalAlignment="Left" Margin="744,56,0,0" VerticalAlignment="Top" Grid.Column="2" Width="72" Click="Ruler_Mode_Button_Click"/>
+                            <Button x:Name="Preview_Mode_Button" Background="#AF535353" Content="预览模式" HorizontalAlignment="Left" Margin="487,56,0,0" VerticalAlignment="Top" Grid.Column="2" Width="72" Click="Preview_Mode_Button_Click"/>
                             <TextBlock x:Name="Selected_Condition_Text_Copy1" HorizontalAlignment="Left" Margin="489,100,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="2" Width="421" Text="当前选项:" Height="20"/>
                         </Grid>
                     </TabItem>
