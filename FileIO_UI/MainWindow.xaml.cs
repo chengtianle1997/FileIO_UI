@@ -1400,6 +1400,7 @@ namespace FileIO_UI
         // Multi-view list manager in DataTab
         int list_index_status_datatab = 1; // indicator of view index: <=0 -> LineList, 1 -> RecordList(main view), >=2 -> DataList
         DateTime start_date_datatab = new DateTime(), end_date_datatab = new DateTime(); // date choice
+        double start_distance = 0, end_distance = 0, selected_distance = 0;
         LineListItem selected_line_datatab = null;
         RecordListItem selected_record_datatab = null;
         DataListItem selected_data_datatab = null;
@@ -1451,6 +1452,7 @@ namespace FileIO_UI
                 Data_List_View_Button_DataTab.Background = (System.Windows.Media.Brush)SelectedColor;
             }));
 
+            RefreshDistancePicker_DataTab();
             list_index_status_datatab = 2;
             GetDataList_DataTab();
         }
@@ -1683,6 +1685,16 @@ namespace FileIO_UI
             end_date_datatab = ((DateTime)End_Date_Picker_DataTab.SelectedDate).AddDays(1);
         }
 
+        //private void Start_Distance_Text_Changed(object sender, DependencyPropertyChangedEventHandler e)
+        //{
+        //    start_distance = Convert.ToDouble(Start_Distance_Text.Text);
+        //}
+
+        //private void End_Distance_Text_Changed(object sender, DependencyPropertyChangedEventHandler e)
+        //{
+        //    end_distance = Convert.ToDouble(End_Distance_Text.Text);
+        //}
+
         private void Search_Record_Button_DataTab_Click(object sender, RoutedEventArgs e)
         {
             ShowRecordList_DataTab();
@@ -1708,6 +1720,25 @@ namespace FileIO_UI
             {
                 Selected_Condition_Text_DataTab.Text = text_str;
             }));
+        }
+
+        public void RefreshDistancePicker_DataTab()
+        {
+            if (selected_record_datatab == null)
+                return;
+            try
+            {
+                MetroTunnelDB Database = new MetroTunnelDB();
+                Database.GetMaxMinDetectDataDistance(Convert.ToInt32(selected_record_datatab.RecordNum), ref start_distance, ref end_distance);
+                Start_Distance_Text.Text = start_distance.ToString();
+                End_Distance_Text.Text = end_distance.ToString();
+                Distance_Slider.Minimum = start_distance;
+                Distance_Slider.Maximum = end_distance;
+            }
+            catch(System.Exception)
+            {
+                return;
+            }
         }
 
         private void Line_List_Item_DataTab_DoubleClick(object sender, RoutedEventArgs e)
@@ -1779,6 +1810,8 @@ namespace FileIO_UI
             Rectangle_Box_Mode_Button.Background = UnSelectedColor;
             Ruler_Mode_Button.Background = UnSelectedColor;
             rect_step = 0;
+            ruler_step = 0;
+            Preview_Mode_Instruction_Text.Text = "预览模式：显示二维截面及其详细信息";
             try
             {
                 ShowDetail_DataTab(selected_data_datatab);
@@ -1799,6 +1832,8 @@ namespace FileIO_UI
             Rectangle_Box_Mode_Button.Background = UnSelectedColor;
             Ruler_Mode_Button.Background = UnSelectedColor;
             rect_step = 0;
+            ruler_step = 0;
+            Preview_Mode_Instruction_Text.Text = "单点采样：单击需要测算的位置";
             try
             {
                 Section_Detail_List_DataTab.Items.Clear();
@@ -1818,6 +1853,8 @@ namespace FileIO_UI
             Rectangle_Box_Mode_Button.Background = SelectedColor;
             Ruler_Mode_Button.Background = UnSelectedColor;
             rect_step = 0;
+            ruler_step = 0;
+            Preview_Mode_Instruction_Text.Text = "框选采样：绘制选框以计算框内点的平均中心距";
             try
             {
                 Section_Detail_List_DataTab.Items.Clear();
@@ -1837,6 +1874,8 @@ namespace FileIO_UI
             Rectangle_Box_Mode_Button.Background = UnSelectedColor;
             Ruler_Mode_Button.Background = SelectedColor;
             rect_step = 0;
+            ruler_step = 0;
+            Preview_Mode_Instruction_Text.Text = "距离标尺：单击选点，测量两点间距";
             try
             {
                 Section_Detail_List_DataTab.Items.Clear();
@@ -1861,7 +1900,11 @@ namespace FileIO_UI
                 rect_step = 0;
             }               
             else if (datatab_mode_index == 3)
+            {
                 Ruler_Mode_Button_Click(sender, e);
+                ruler_step = 0;
+            }
+
         }
 
         // Preview area content
@@ -1876,6 +1919,7 @@ namespace FileIO_UI
 
         Bitmap bmp = new Bitmap(section_view_width_datatab, section_view_height_datatab);
 
+        System.Drawing.Pen CenterPen = new System.Drawing.Pen(System.Drawing.Color.DarkGreen, 3);
         System.Drawing.Pen LinePen = new System.Drawing.Pen(System.Drawing.Color.Red, 2);
         System.Drawing.Pen RectPen = new System.Drawing.Pen(System.Drawing.Color.Yellow, 2);
         System.Drawing.Pen RulerPen = new System.Drawing.Pen(System.Drawing.Color.Red, 2);
@@ -1902,6 +1946,7 @@ namespace FileIO_UI
             g_bmp.Clear(System.Drawing.Color.Gray);
             for (int i = 0; i < libMetroTunnelDB.DataConv.floatArrLength; i++)
             {
+                g_bmp.DrawEllipse(CenterPen, section_view_cx_datatab, section_view_cy_datatab, 3, 3);
                 if (i % downsample_rate_datatab == 0)
                 {
                     if (dataConv.s[i] == 0)
@@ -1932,9 +1977,13 @@ namespace FileIO_UI
             Section_Detail_List_DataTab.Items.Add(String.Format("滚转角: \n {0}°", dataitem.Rotation));
         }
 
-        // Rect Controller
+        // Mouse action controller
         public static System.Windows.Point rect_downpoint = new System.Windows.Point(0, 0);
+        public static System.Windows.Point ruler_downpoint = new System.Windows.Point(0, 0);
         public static int rect_step = 0; // 0: initial condition, 1: first point chosen
+        public static int ruler_step = 0; // 0: initial condition, 1: first point chosen
+        public const int rect_point_size = 2;
+        public const int ruler_point_size = 2;
         public void DataTab_MouseDown(object sender, MouseButtonEventArgs e)
         {
             System.Windows.Point downpoint = e.GetPosition(Section_Image_DataTab);
@@ -1955,7 +2004,7 @@ namespace FileIO_UI
                     Section_Image_DataTab.Source = bmpSource;
                     return;
                 }
-                Section_Detail_List_DataTab.Items.Add(String.Format("距离：{0}", point_oncloud.s));              
+                Section_Detail_List_DataTab.Items.Add(String.Format("距离：{0}mm", point_oncloud.s));              
                 Graphics g_bmp = Graphics.FromImage(bmp_copy);
                 g_bmp.DrawLine(LinePen, new PointF(section_view_cx_datatab, section_view_cy_datatab), new PointF(point_oncloud.x, point_oncloud.y));
                 bmpSource = Imaging.CreateBitmapSourceFromHBitmap(bmp_copy.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
@@ -1974,15 +2023,60 @@ namespace FileIO_UI
                     if (downpoint.X <= 0 || downpoint.Y <= 0
                        || downpoint.X >= section_view_width_datatab || downpoint.Y >= section_view_height_datatab)
                         return;
-                    Section_Detail_List_DataTab.Items[1] = (String.Format("点 2 位置：{0}mm，{1}mm",
-                        ((downpoint.X - section_view_cx_datatab) * zoom_rate_datatab).ToString("#.00"), ((section_view_cy_datatab - downpoint.Y) * zoom_rate_datatab).ToString("#.00")));
+                    if (Section_Detail_List_DataTab.Items.Count < 2)
+                    {
+                        Section_Detail_List_DataTab.Items.Add(String.Format("点 2 位置：{0}mm，{1}mm",
+                                ((downpoint.X - section_view_cx_datatab) * zoom_rate_datatab).ToString("#.00"), ((section_view_cy_datatab - downpoint.Y) * zoom_rate_datatab).ToString("#.00")));
+                    }
+                    else
+                    {
+                        Section_Detail_List_DataTab.Items[1] = (String.Format("点 2 位置：{0}mm，{1}mm",
+                                ((downpoint.X - section_view_cx_datatab) * zoom_rate_datatab).ToString("#.00"), ((section_view_cy_datatab - downpoint.Y) * zoom_rate_datatab).ToString("#.00")));
+                    }
                     Bitmap bmp_copy = (Bitmap)bmp.Clone();
                     BitmapSource bmpSource;
                     Graphics g_bmp = Graphics.FromImage(bmp_copy);
                     g_bmp.DrawRectangle(RectPen, GetRect(downpoint, rect_downpoint));
                     bmpSource = Imaging.CreateBitmapSourceFromHBitmap(bmp_copy.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
                     Section_Image_DataTab.Source = bmpSource;
-
+                }              
+            }
+            else if (datatab_mode_index == 3)
+            {
+                if (tree.root == null)
+                    return;
+                if (ruler_step == 1)
+                {
+                    double real_x1 = (ruler_downpoint.X - section_view_cx_datatab) * zoom_rate_datatab;
+                    double real_y1 = (section_view_cy_datatab - ruler_downpoint.Y) * zoom_rate_datatab;
+                    double real_x2 = (downpoint.X - section_view_cx_datatab) * zoom_rate_datatab;
+                    double real_y2 = (section_view_cy_datatab - downpoint.Y) * zoom_rate_datatab;
+                    double dist = Math.Sqrt(Math.Pow((real_x1 - real_x2), 2) + Math.Pow((real_y1 - real_y2), 2));
+                    if (Section_Detail_List_DataTab.Items.Count < 2)
+                    {
+                        Section_Detail_List_DataTab.Items.Add(String.Format("点 2 位置：{0}mm，{1}mm",
+                        (real_x2).ToString("#.00"), (real_y2).ToString("#.00")));
+                    }
+                    else
+                    {
+                        Section_Detail_List_DataTab.Items[1] = (String.Format("点 2 位置：{0}mm，{1}mm",
+                        (real_x2).ToString("#.00"), (real_y2).ToString("#.00")));
+                    }
+                    if (Section_Detail_List_DataTab.Items.Count < 3)
+                    {
+                        Section_Detail_List_DataTab.Items.Add(String.Format("距离：{0}mm", dist.ToString("#.00")));
+                    }
+                    else
+                    {
+                        Section_Detail_List_DataTab.Items[2] = (String.Format("距离：{0}mm", dist.ToString("#.00")));
+                    }
+                    Bitmap bmp_copy = (Bitmap)bmp.Clone();
+                    Graphics g_bmp = Graphics.FromImage(bmp_copy);
+                    g_bmp.DrawEllipse(LinePen, (int)ruler_downpoint.X, (int)ruler_downpoint.Y, ruler_point_size, ruler_point_size);
+                    g_bmp.DrawLine(LinePen, new PointF((float)ruler_downpoint.X, (float)ruler_downpoint.Y), new PointF((float)downpoint.X, (float)downpoint.Y));
+                    g_bmp.DrawEllipse(LinePen, (int)downpoint.X, (int)downpoint.Y, ruler_point_size, ruler_point_size);
+                    BitmapSource bmpSource = Imaging.CreateBitmapSourceFromHBitmap(bmp_copy.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                    Section_Image_DataTab.Source = bmpSource;
                 }              
             }
         }
@@ -2000,8 +2094,7 @@ namespace FileIO_UI
                         return;
                     Section_Detail_List_DataTab.Items.Clear();
                     Section_Detail_List_DataTab.Items.Add(String.Format("点 1 位置：{0}mm，{1}mm",
-                        ((downpoint.X - section_view_cx_datatab) * zoom_rate_datatab).ToString("#.00"), ((section_view_cy_datatab - downpoint.Y) * zoom_rate_datatab).ToString("#.00")));
-                    Section_Detail_List_DataTab.Items.Add("");
+                        ((downpoint.X - section_view_cx_datatab) * zoom_rate_datatab).ToString("#.00"), ((section_view_cy_datatab - downpoint.Y) * zoom_rate_datatab).ToString("#.00")));                   
                     rect_downpoint = downpoint;
                     rect_step = 1;
                     BitmapSource bmpSource = Imaging.CreateBitmapSourceFromHBitmap(bmp.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
@@ -2057,10 +2150,65 @@ namespace FileIO_UI
                     Section_Detail_List_DataTab.Items.Add(String.Format("中心距: {0}mm", dist.ToString("#.00")));
                     Graphics g_bmp = Graphics.FromImage(bmp_copy);
                     g_bmp.DrawRectangle(RectPen, GetRect(downpoint, rect_downpoint));
-                    g_bmp.DrawEllipse(LinePen, (int)weight_center[0], (int)weight_center[1], 2, 2);
+                    g_bmp.DrawEllipse(LinePen, (int)weight_center[0], (int)weight_center[1], rect_point_size, rect_point_size);
+                    g_bmp.DrawLine(LinePen, new PointF(weight_center[0], weight_center[1]), new PointF(section_view_cx_datatab, section_view_cy_datatab));
                     bmpSource = Imaging.CreateBitmapSourceFromHBitmap(bmp_copy.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
                     Section_Image_DataTab.Source = bmpSource; 
                 }                
+            }
+            else if (datatab_mode_index == 3)
+            {
+                if (ruler_step == 0)
+                {
+                    if (tree.root == null)
+                        return;
+                    Section_Detail_List_DataTab.Items.Clear();
+                    Section_Detail_List_DataTab.Items.Add(String.Format("点 1 位置：{0}mm，{1}mm",
+                        ((downpoint.X - section_view_cx_datatab) * zoom_rate_datatab).ToString("#.00"), ((section_view_cy_datatab - downpoint.Y) * zoom_rate_datatab).ToString("#.00")));
+                    ruler_downpoint = downpoint;
+                    ruler_step = 1;
+                    Bitmap bmp_copy = (Bitmap)bmp.Clone();
+                    Graphics g_bmp = Graphics.FromImage(bmp_copy);
+                    g_bmp.DrawEllipse(LinePen, (int)downpoint.X, (int)downpoint.Y, ruler_point_size, ruler_point_size);
+                    BitmapSource bmpSource = Imaging.CreateBitmapSourceFromHBitmap(bmp_copy.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                    Section_Image_DataTab.Source = bmpSource;
+                }
+                else if (ruler_step == 1)
+                {
+                    if (tree.root == null)
+                        return;
+                    double real_x1 = (ruler_downpoint.X - section_view_cx_datatab) * zoom_rate_datatab;
+                    double real_y1 = (section_view_cy_datatab - ruler_downpoint.Y) * zoom_rate_datatab;
+                    double real_x2 = (downpoint.X - section_view_cx_datatab) * zoom_rate_datatab;
+                    double real_y2 = (section_view_cy_datatab - downpoint.Y) * zoom_rate_datatab;
+                    double dist = Math.Sqrt(Math.Pow((real_x1 - real_x2), 2) + Math.Pow((real_y1 - real_y2), 2));
+                    if (Section_Detail_List_DataTab.Items.Count < 2)
+                    {
+                        Section_Detail_List_DataTab.Items.Add(String.Format("点 2 位置：{0}mm，{1}mm",
+                        (real_x2).ToString("#.00"), (real_y2).ToString("#.00")));
+                    }
+                    else
+                    {
+                        Section_Detail_List_DataTab.Items[1] = (String.Format("点 2 位置：{0}mm，{1}mm",
+                        (real_x2).ToString("#.00"), (real_y2).ToString("#.00")));
+                    }
+                    if (Section_Detail_List_DataTab.Items.Count < 3)
+                    {
+                        Section_Detail_List_DataTab.Items.Add(String.Format("距离：{0}mm", dist.ToString("#.00")));
+                    }
+                    else
+                    {
+                        Section_Detail_List_DataTab.Items[2] = (String.Format("距离：{0}mm", dist.ToString("#.00")));
+                    }
+                    ruler_step = 0;
+                    Bitmap bmp_copy = (Bitmap)bmp.Clone();
+                    Graphics g_bmp = Graphics.FromImage(bmp_copy);
+                    g_bmp.DrawEllipse(LinePen, (int)ruler_downpoint.X, (int)ruler_downpoint.Y, ruler_point_size, ruler_point_size);
+                    g_bmp.DrawLine(LinePen, new PointF((float)ruler_downpoint.X, (float)ruler_downpoint.Y), new PointF((float)downpoint.X, (float)downpoint.Y));
+                    g_bmp.DrawEllipse(LinePen, (int)downpoint.X, (int)downpoint.Y, ruler_point_size, ruler_point_size);
+                    BitmapSource bmpSource = Imaging.CreateBitmapSourceFromHBitmap(bmp_copy.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                    Section_Image_DataTab.Source = bmpSource;
+                }
             }
         }
 

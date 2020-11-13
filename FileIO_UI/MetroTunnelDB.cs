@@ -874,6 +874,18 @@ namespace libMetroTunnelDB
             return entry;
         }
 
+        protected double ReadMinDistance(MySqlDataReader reader)
+        {
+            double min_distance = reader.GetDouble("MIN(Distance)");
+            return min_distance;
+        }
+
+        protected double ReadMaxDistance(MySqlDataReader reader)
+        {
+            double max_distance = reader.GetDouble("MAX(Distance)");
+            return max_distance;
+        }
+
         protected DataDisp ReadDataDisp(MySqlDataReader reader)
         {
             DataDisp entry = new DataDisp
@@ -1057,6 +1069,18 @@ namespace libMetroTunnelDB
             DoQuery(queryStrMax, ref dateTimes_max, ReadMaxDetectRecordTime);
             start_time = dateTimes_min[0];
             stop_time = dateTimes_max[0];
+        }
+
+        public void GetMaxMinDetectDataDistance(int record_id, ref double start_distance, ref double end_distance)
+        {
+            String queryStrMin = String.Format("SELECT MIN(Distance) FROM DataConv WHERE RecordID={0}", record_id);
+            String queryStrMax = String.Format("SELECT MAX(Distance) FROM DataConv WHERE RecordID={0}", record_id);
+            List<double> start_dist_list = new List<double>();
+            List<double> end_dist_list = new List<double>();
+            DoQuery(queryStrMin, ref start_dist_list, ReadMinDistance);
+            DoQuery(queryStrMax, ref end_dist_list, ReadMaxDistance);
+            start_distance = start_dist_list[0];
+            end_distance = end_dist_list[0];
         }
 
         public void DeleteDetectRecord(int record_id)
