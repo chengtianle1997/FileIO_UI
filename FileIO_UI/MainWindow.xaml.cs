@@ -1778,6 +1778,18 @@ namespace FileIO_UI
             Single_Point_Mode_Button.Background = UnSelectedColor;
             Rectangle_Box_Mode_Button.Background = UnSelectedColor;
             Ruler_Mode_Button.Background = UnSelectedColor;
+            rect_step = 0;
+            try
+            {
+                ShowDetail_DataTab(selected_data_datatab);
+                BitmapSource bmpSource = Imaging.CreateBitmapSourceFromHBitmap(bmp.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                Section_Image_DataTab.Source = bmpSource;
+            }
+            catch(System.Exception)
+            {
+                return;
+            }
+            
         }
         private void Single_Point_Mode_Button_Click(object sender, RoutedEventArgs e)
         {
@@ -1786,6 +1798,17 @@ namespace FileIO_UI
             Single_Point_Mode_Button.Background = SelectedColor;
             Rectangle_Box_Mode_Button.Background = UnSelectedColor;
             Ruler_Mode_Button.Background = UnSelectedColor;
+            rect_step = 0;
+            try
+            {
+                Section_Detail_List_DataTab.Items.Clear();
+                BitmapSource bmpSource = Imaging.CreateBitmapSourceFromHBitmap(bmp.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                Section_Image_DataTab.Source = bmpSource;
+            }
+            catch (System.Exception)
+            {
+                return;
+            }
         }
         private void Rectangle_Box_Mode_Button_Click(object sender, RoutedEventArgs e)
         {
@@ -1794,6 +1817,17 @@ namespace FileIO_UI
             Single_Point_Mode_Button.Background = UnSelectedColor;
             Rectangle_Box_Mode_Button.Background = SelectedColor;
             Ruler_Mode_Button.Background = UnSelectedColor;
+            rect_step = 0;
+            try
+            {
+                Section_Detail_List_DataTab.Items.Clear();
+                BitmapSource bmpSource = Imaging.CreateBitmapSourceFromHBitmap(bmp.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                Section_Image_DataTab.Source = bmpSource;
+            }
+            catch (System.Exception)
+            {
+                return;
+            }
         }
         private void Ruler_Mode_Button_Click(object sender, RoutedEventArgs e)
         {
@@ -1802,6 +1836,32 @@ namespace FileIO_UI
             Single_Point_Mode_Button.Background = UnSelectedColor;
             Rectangle_Box_Mode_Button.Background = UnSelectedColor;
             Ruler_Mode_Button.Background = SelectedColor;
+            rect_step = 0;
+            try
+            {
+                Section_Detail_List_DataTab.Items.Clear();
+                BitmapSource bmpSource = Imaging.CreateBitmapSourceFromHBitmap(bmp.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                Section_Image_DataTab.Source = bmpSource;
+            }
+            catch (System.Exception)
+            {
+                return;
+            }
+        }
+
+        private void Reset_Mode_Button_Click(object sender, RoutedEventArgs e)
+        {
+            if (datatab_mode_index == 0)
+                Preview_Mode_Button_Click(sender, e);
+            else if (datatab_mode_index == 1)
+                Single_Point_Mode_Button_Click(sender, e);
+            else if (datatab_mode_index == 2)
+            {
+                Rectangle_Box_Mode_Button_Click(sender, e);
+                rect_step = 0;
+            }               
+            else if (datatab_mode_index == 3)
+                Ruler_Mode_Button_Click(sender, e);
         }
 
         // Preview area content
@@ -1814,11 +1874,11 @@ namespace FileIO_UI
 
         public LLRBTree tree = new LLRBTree();
 
-        public List<System.Drawing.Point> point_click = new List<System.Drawing.Point>();
-
         Bitmap bmp = new Bitmap(section_view_width_datatab, section_view_height_datatab);
 
         System.Drawing.Pen LinePen = new System.Drawing.Pen(System.Drawing.Color.Red, 2);
+        System.Drawing.Pen RectPen = new System.Drawing.Pen(System.Drawing.Color.Yellow, 2);
+        System.Drawing.Pen RulerPen = new System.Drawing.Pen(System.Drawing.Color.Red, 2);
 
         public float GetRealAngle(double px, double py)
         {
@@ -1872,6 +1932,9 @@ namespace FileIO_UI
             Section_Detail_List_DataTab.Items.Add(String.Format("滚转角: \n {0}°", dataitem.Rotation));
         }
 
+        // Rect Controller
+        public static System.Windows.Point rect_downpoint = new System.Windows.Point(0, 0);
+        public static int rect_step = 0; // 0: initial condition, 1: first point chosen
         public void DataTab_MouseDown(object sender, MouseButtonEventArgs e)
         {
             System.Windows.Point downpoint = e.GetPosition(Section_Image_DataTab);
@@ -1897,17 +1960,187 @@ namespace FileIO_UI
                 g_bmp.DrawLine(LinePen, new PointF(section_view_cx_datatab, section_view_cy_datatab), new PointF(point_oncloud.x, point_oncloud.y));
                 bmpSource = Imaging.CreateBitmapSourceFromHBitmap(bmp_copy.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
                 Section_Image_DataTab.Source = bmpSource;
-            }          
+            }
+            
         }
 
         public void DataTab_MouseMove(object sender, MouseEventArgs e)
         {
             System.Windows.Point downpoint = e.GetPosition(Section_Image_DataTab);
+            if (datatab_mode_index == 2)
+            {
+                if (rect_step == 1)
+                {
+                    if (downpoint.X <= 0 || downpoint.Y <= 0
+                       || downpoint.X >= section_view_width_datatab || downpoint.Y >= section_view_height_datatab)
+                        return;
+                    Section_Detail_List_DataTab.Items[1] = (String.Format("点 2 位置：{0}mm，{1}mm",
+                        ((downpoint.X - section_view_cx_datatab) * zoom_rate_datatab).ToString("#.00"), ((section_view_cy_datatab - downpoint.Y) * zoom_rate_datatab).ToString("#.00")));
+                    Bitmap bmp_copy = (Bitmap)bmp.Clone();
+                    BitmapSource bmpSource;
+                    Graphics g_bmp = Graphics.FromImage(bmp_copy);
+                    g_bmp.DrawRectangle(RectPen, GetRect(downpoint, rect_downpoint));
+                    bmpSource = Imaging.CreateBitmapSourceFromHBitmap(bmp_copy.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                    Section_Image_DataTab.Source = bmpSource;
+
+                }              
+            }
         }
 
         public void DataTab_MouseUp(object sender, MouseButtonEventArgs e)
         {
             System.Windows.Point downpoint = e.GetPosition(Section_Image_DataTab);
+            if (downpoint.X <= 0 || downpoint.Y <= 0 || downpoint.X >= section_view_width_datatab || downpoint.Y >= section_view_height_datatab)
+                return;
+            if (datatab_mode_index == 2)
+            {
+                if (rect_step == 0)
+                {
+                    if (tree.root == null)
+                        return;
+                    Section_Detail_List_DataTab.Items.Clear();
+                    Section_Detail_List_DataTab.Items.Add(String.Format("点 1 位置：{0}mm，{1}mm",
+                        ((downpoint.X - section_view_cx_datatab) * zoom_rate_datatab).ToString("#.00"), ((section_view_cy_datatab - downpoint.Y) * zoom_rate_datatab).ToString("#.00")));
+                    Section_Detail_List_DataTab.Items.Add("");
+                    rect_downpoint = downpoint;
+                    rect_step = 1;
+                    BitmapSource bmpSource = Imaging.CreateBitmapSourceFromHBitmap(bmp.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                    Section_Image_DataTab.Source = bmpSource;
+                }
+                else if (rect_step == 1)
+                {
+                    if (tree.root == null)
+                        return;                   
+                    Section_Detail_List_DataTab.Items[1] = (String.Format("点 2 位置：{0}mm，{1}mm",
+                        ((downpoint.X - section_view_cx_datatab) * zoom_rate_datatab).ToString("#.00"), ((section_view_cy_datatab - downpoint.Y) * zoom_rate_datatab).ToString("#.00")));                   
+                    rect_step = 0;
+                    Bitmap bmp_copy = (Bitmap)bmp.Clone();
+                    BitmapSource bmpSource;
+                    if(isOPointIncluded(downpoint, rect_downpoint))
+                    {
+                        bmpSource = Imaging.CreateBitmapSourceFromHBitmap(bmp_copy.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                        Section_Image_DataTab.Source = bmpSource;
+                        return;
+                    }
+                    float[] angle_range = GetRealAngleRange(downpoint, rect_downpoint);
+                    if (angle_range == null)
+                    {
+                        bmpSource = Imaging.CreateBitmapSourceFromHBitmap(bmp_copy.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                        Section_Image_DataTab.Source = bmpSource;
+                        return;
+                    }
+                    List<LLRBTree.Point> points = new List<LLRBTree.Point>();
+                    if (angle_range.Length == 2)
+                    {
+                        points = tree.between(angle_range[0], angle_range[1]);
+                    }
+                    else if (angle_range.Length == 4)
+                    {
+                        points = tree.between(angle_range[0], angle_range[1]);
+                        List<LLRBTree.Point> points_add = tree.between(angle_range[2], angle_range[3]);
+                        if (points_add != null)
+                            points = points.Concat(points_add).ToList<LLRBTree.Point>();
+                    }
+                    float[] weight_center = GetWeightCenter(points, GetRect(downpoint, rect_downpoint));
+                    if (weight_center == null || weight_center[0] <= 0 || weight_center[0] >= section_view_width_datatab
+                        || weight_center[1] <= 0 || weight_center[1] >= section_view_height_datatab)
+                    {
+                        bmpSource = Imaging.CreateBitmapSourceFromHBitmap(bmp_copy.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                        Section_Image_DataTab.Source = bmpSource;
+                        return;
+                    }
+                    float real_x = (weight_center[0] - section_view_cx_datatab) * zoom_rate_datatab;
+                    float real_y = (section_view_cy_datatab - weight_center[1]) * zoom_rate_datatab;
+                    float dist = (float)Math.Sqrt(real_x * real_x + real_y * real_y);
+                    Section_Detail_List_DataTab.Items.Add(String.Format("重心坐标: {0}mm, {1}mm", (real_x).ToString("#.00"),
+                        (real_y).ToString("#.00")));
+                    Section_Detail_List_DataTab.Items.Add(String.Format("中心距: {0}mm", dist.ToString("#.00")));
+                    Graphics g_bmp = Graphics.FromImage(bmp_copy);
+                    g_bmp.DrawRectangle(RectPen, GetRect(downpoint, rect_downpoint));
+                    g_bmp.DrawEllipse(LinePen, (int)weight_center[0], (int)weight_center[1], 2, 2);
+                    bmpSource = Imaging.CreateBitmapSourceFromHBitmap(bmp_copy.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                    Section_Image_DataTab.Source = bmpSource; 
+                }                
+            }
+        }
+
+        private float[] GetWeightCenter(List<LLRBTree.Point> points, Rectangle rect)
+        {
+            if (points == null || points.Count < 1)
+                return null;
+            float sum_x = 0, sum_y = 0, count = 0;
+            for (int i = 0; i < points.Count; i++)
+            {
+                if (points[i].x > rect.X && points[i].x < (rect.X + rect.Width) 
+                    && points[i].y > rect.Y && points[i].y < (rect.Y + rect.Height))
+                {
+                    sum_x += points[i].x;
+                    sum_y += points[i].y;
+                    count++;
+                }
+            }
+            if (count < 1)
+                return null;
+            float[] weight_center = new float[2];
+            weight_center[0] = sum_x / count;
+            weight_center[1] = sum_y / count;
+            return weight_center;
+        }
+
+        private Rectangle GetRect(System.Windows.Point pt1, System.Windows.Point pt2)
+        {
+            int x = (int)Math.Min(pt1.X, pt2.X);
+            int y = (int)Math.Min(pt1.Y, pt2.Y);
+            int width = (int)Math.Abs(pt1.X - pt2.X);
+            int height = (int)Math.Abs(pt1.Y - pt2.Y);
+            return new Rectangle(x, y, width, height);
+        }
+
+        private bool isOPointIncluded(System.Windows.Point pt1, System.Windows.Point pt2)
+        {
+            if (pt1.X * pt2.X <= 0 && pt1.Y * pt2.Y <= 0)
+                return true;
+            else
+                return false;
+        }
+
+        private float[] GetRealAngleRange(System.Windows.Point pt1, System.Windows.Point pt2)
+        {
+            double x1 = pt1.X;
+            double x2 = pt2.X;
+            double y1 = pt1.Y;
+            double y2 = pt2.Y;
+            double[] a = new double[4];
+            a[0] = GetRealAngle(x1, y1);
+            a[1] = GetRealAngle(x1, y2);
+            a[2] = GetRealAngle(x2, y1);
+            a[3] = GetRealAngle(x2, y2);
+            double min_a = double.MaxValue;
+            double max_a = double.MinValue;
+            for (int i = 0; i < 4; i++)
+            {
+                min_a = Math.Min(min_a, a[i]);
+                max_a = Math.Max(max_a, a[i]);
+            }
+            if (max_a <= min_a)
+                return null;
+            if (max_a - min_a < Math.PI / 4)
+            {
+                float[] ret = new float[2];
+                ret[0] = (float)min_a;
+                ret[1] = (float)max_a;
+                return ret;
+            }
+            else if ((min_a - max_a) % (2 * Math.PI) < Math.PI / 4)
+            {
+                float[] ret = new float[4];
+                ret[0] = 0;
+                ret[1] = (float)min_a;
+                ret[2] = (float)max_a;
+                ret[3] = (float)(2 * Math.PI);
+                return ret;
+            }
+            return null;
         }
     }
 

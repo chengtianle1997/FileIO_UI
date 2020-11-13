@@ -368,6 +368,7 @@
                             <Button x:Name="Ruler_Mode_Button" Background="#FFDDDDDD" Content="距离标尺" HorizontalAlignment="Left" Margin="744,56,0,0" VerticalAlignment="Top" Grid.Column="2" Width="72" Click="Ruler_Mode_Button_Click"/>
                             <Button x:Name="Preview_Mode_Button" Background="#AF535353" Content="预览模式" HorizontalAlignment="Left" Margin="487,56,0,0" VerticalAlignment="Top" Grid.Column="2" Width="72" Click="Preview_Mode_Button_Click"/>
                             <TextBlock x:Name="Selected_Condition_Text_Copy1" HorizontalAlignment="Left" Margin="489,100,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="2" Width="421" Text="当前选项:" Height="20"/>
+                            <Button x:Name="Reset_Mode_Button" Background="#FFDDDDDD" Content="清空" HorizontalAlignment="Left" Margin="744,98,0,0" VerticalAlignment="Top" Grid.Column="2" Width="72" Click="Reset_Mode_Button_Click"/>
                         </Grid>
                     </TabItem>
                 </TabControl>

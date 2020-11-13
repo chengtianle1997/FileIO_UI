@@ -1274,8 +1274,8 @@ namespace libMetroTunnelDB
                     String queryStr2 = String.Format(formatStr, record_id, 0, TimeStamp + search_int);
                     DoQuery(queryStr1, ref arr1, ReadTandD);
                     DoQuery(queryStr2, ref arr2, ReadTandD);
-                    arr.Concat(arr1);
-                    arr.Concat(arr2);
+                    arr = arr.Concat(arr1).ToList<TandD>();
+                    arr = arr.Concat(arr2).ToList<TandD>();
                 }
                 else if (TimeStamp + search_int > MillisecondsMax)
                 {
@@ -1285,8 +1285,8 @@ namespace libMetroTunnelDB
                     String queryStr2 = String.Format(formatStr, record_id, 0, (TimeStamp + search_int) % MillisecondsMax);
                     DoQuery(queryStr1, ref arr1, ReadTandD);
                     DoQuery(queryStr2, ref arr2, ReadTandD);
-                    arr.Concat(arr1);
-                    arr.Concat(arr2);
+                    arr = arr.Concat(arr1).ToList<TandD>();
+                    arr = arr.Concat(arr2).ToList<TandD>();
                 }
                 else
                 {
