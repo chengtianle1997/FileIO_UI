@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Linq;
 using System.Threading;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -1400,7 +1401,8 @@ namespace FileIO_UI
         // Multi-view list manager in DataTab
         int list_index_status_datatab = 1; // indicator of view index: <=0 -> LineList, 1 -> RecordList(main view), >=2 -> DataList
         DateTime start_date_datatab = new DateTime(), end_date_datatab = new DateTime(); // date choice
-        double start_distance = 0, end_distance = 0, selected_distance = 0;
+        double start_distance_record = 0, end_distance_record = 0;
+        double start_distance_datatab = 0, end_distance_datatab = 0, selected_distance_datatab = 0;
         LineListItem selected_line_datatab = null;
         RecordListItem selected_record_datatab = null;
         DataListItem selected_data_datatab = null;
@@ -1557,7 +1559,6 @@ namespace FileIO_UI
         private void GetDataList_t_DataTab()
         {
             MetroTunnelDB Database = new MetroTunnelDB();
-            List<libMetroTunnelDB.DataConv> datas = new List<DataConv>();
             List<libMetroTunnelDB.DataOverview> dataOverviews = new List<DataOverview>();
             if (selected_record_datatab == null)
                 return;
@@ -1568,7 +1569,6 @@ namespace FileIO_UI
             }));
             try
             {
-                Database.QueryDataConv(ref datas, Convert.ToInt32(selected_record_datatab.RecordNum), QueryFrom_datatab, maxQuery);
                 Database.QueryDataOverview(ref dataOverviews, Convert.ToInt32(selected_record_datatab.RecordNum), QueryFrom_datatab, maxQuery);
                 QueryFrom += maxQuery;
             }
@@ -1576,7 +1576,7 @@ namespace FileIO_UI
             {
                 return;
             }
-            for (int i = 0; i < datas.Count; i++)
+            for (int i = 0; i < dataOverviews.Count; i++)
             {
                 Dispatcher.Invoke(new Action(() =>
                 {
@@ -1592,40 +1592,78 @@ namespace FileIO_UI
 
         public void GetMoreData_DataTab()
         {
-            Thread get_more_data_thread = new Thread(GetMoreData_t_DataTab);
-            get_more_data_thread.Start();
+            GetMoreData_t_DataTab();
+            //Thread get_more_data_thread = new Thread(GetMoreData_t_DataTab);
+            //get_more_data_thread.Start();
         }
 
         private void GetMoreData_t_DataTab()
         {
             MetroTunnelDB Database = new MetroTunnelDB();
-            List<libMetroTunnelDB.DataConv> datas = new List<DataConv>();
-            if (selected_record == null)
+            List<libMetroTunnelDB.DataOverview> dataOverviews = new List<DataOverview>();
+            if (selected_data_datatab == null)
                 return;
-            try
+            if (Data_List_DataTab.SelectedIndex == 0)
             {
-                Database.QueryDataConv(ref datas, Convert.ToInt32(selected_record.RecordNum), QueryFrom, maxQuery);
-                QueryFrom += maxQuery;
+                // Query more from the top
+                try
+                {
+                    DataListItem dataListItem = Data_List_DataTab.Items[1] as DataListItem;
+                    Database.QueryDataOverview(ref dataOverviews, Convert.ToInt32(selected_record_datatab.RecordNum), 
+                        Convert.ToDouble(dataListItem.DataLoc) - 2 * distance_query_range, Convert.ToDouble(dataListItem.DataLoc));
+                    //QueryFrom += maxQuery;
+                }
+                catch (SystemException)
+                {
+                    return;
+                }
+                //Dispatcher.Invoke(new Action(() =>
+                //{
+                //    Data_List_DataTab.Items.RemoveAt(0);
+                //}));
+                for (int i = 0; i < dataOverviews.Count; i++)
+                {
+                    Dispatcher.Invoke(new Action(() =>
+                    {
+                        Data_List_DataTab.Items.Insert(i + 1, new DataListItem(dataOverviews[i].Distance, dataOverviews[i].LongAxis, dataOverviews[i].ShortAxis
+                            , dataOverviews[i].HorizontalAxis, dataOverviews[i].Rotation, dataOverviews[i].Constriction, dataOverviews[i].Crack));
+                    }));
+                }
+                //Dispatcher.Invoke(new Action(() =>
+                //{
+                //    Data_List_DataTab.Items.Add(new DataListItem("..."));
+                //}));
             }
-            catch (SystemException)
+            else if (Data_List_DataTab.SelectedIndex == Data_List_DataTab.Items.Count - 1)
             {
-                return;
-            }
-            Dispatcher.Invoke(new Action(() =>
-            {
-                Data_List.Items.RemoveAt(Data_List.Items.Count - 1);
-            }));
-            for (int i = 0; i < datas.Count; i++)
-            {
+                // Query more from the bottom
+                try
+                {
+                    DataListItem dataListItem = Data_List_DataTab.Items[Data_List_DataTab.Items.Count - 2] as DataListItem;
+                    Database.QueryDataOverview(ref dataOverviews, Convert.ToInt32(selected_record_datatab.RecordNum), Convert.ToDouble(dataListItem.DataLoc), Convert.ToDouble(dataListItem.DataLoc) + 2 * distance_query_range);
+                    //QueryFrom += maxQuery;
+                }
+                catch (SystemException)
+                {
+                    return;
+                }
                 Dispatcher.Invoke(new Action(() =>
                 {
-                    Data_List.Items.Add(new DataListItem(datas[i].Distance, 0, 0, 0, 0, false, false));
+                    Data_List_DataTab.Items.RemoveAt(Data_List_DataTab.Items.Count - 1);
+                }));
+                for (int i = 0; i < dataOverviews.Count; i++)
+                {
+                    Dispatcher.Invoke(new Action(() =>
+                    {
+                        Data_List_DataTab.Items.Add(new DataListItem(dataOverviews[i].Distance, dataOverviews[i].LongAxis, dataOverviews[i].ShortAxis
+                            , dataOverviews[i].HorizontalAxis, dataOverviews[i].Rotation, dataOverviews[i].Constriction, dataOverviews[i].Crack));
+                    }));
+                }
+                Dispatcher.Invoke(new Action(() =>
+                {
+                    Data_List_DataTab.Items.Add(new DataListItem("..."));
                 }));
             }
-            Dispatcher.Invoke(new Action(() =>
-            {
-                Data_List.Items.Add(new DataListItem("..."));
-            }));
         }
 
         private void Line_List_View_Button_DataTab_Click(object sender, RoutedEventArgs e)
@@ -1685,15 +1723,113 @@ namespace FileIO_UI
             end_date_datatab = ((DateTime)End_Date_Picker_DataTab.SelectedDate).AddDays(1);
         }
 
-        //private void Start_Distance_Text_Changed(object sender, DependencyPropertyChangedEventHandler e)
-        //{
-        //    start_distance = Convert.ToDouble(Start_Distance_Text.Text);
-        //}
+        private void Start_Distance_Text_Changed(object sender, TextChangedEventArgs e)
+        {
+            if (Start_Distance_Text.Text != null)
+            {
+                try
+                {
+                    double start_dist = Convert.ToDouble(Start_Distance_Text.Text);
+                    if (start_dist < start_distance_record)
+                    {
+                        Distance_Input_Warning_Label.Text = "里程范围起点值越界";
+                        return;
+                    }
+                    else
+                    {
+                        Distance_Input_Warning_Label.Text = "";
+                    }
+                    start_distance_datatab = start_dist;
+                    Distance_Slider.Minimum = start_distance_datatab;
+                }
+                catch (System.Exception)
+                {
+                    return;
+                }
+            }            
+        }
+        private void End_Distance_Text_Changed(object sender, TextChangedEventArgs e)
+        {
+            if (End_Distance_Text.Text != null)
+            {
+                try
+                {
+                    double end_dist = Convert.ToDouble(End_Distance_Text.Text);
+                    if (end_dist > end_distance_record)
+                    {
+                        Distance_Input_Warning_Label.Text = "里程范围终点值越界";
+                        return;
+                    }
+                    else
+                    {
+                        Distance_Input_Warning_Label.Text = "";
+                    }
+                    end_distance_datatab = end_dist;
+                    Distance_Slider.Maximum = end_distance_datatab;
+                }
+                catch (System.Exception)
+                {
+                    return;
+                }
+            }
+        }
 
-        //private void End_Distance_Text_Changed(object sender, DependencyPropertyChangedEventHandler e)
-        //{
-        //    end_distance = Convert.ToDouble(End_Distance_Text.Text);
-        //}
+        double distance_query_range = 1500;
+        private void Distance_Slider_Dragged(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
+        {
+            try
+            {
+                selected_distance_datatab = Distance_Slider.Value;
+                Thread data_slider_query_thread = new Thread(Data_Slider_Query_t);
+                data_slider_query_thread.Start();
+            }
+            catch (System.Exception)
+            {
+                return;
+            }
+            
+        }
+
+        private void Data_Slider_Query_t()
+        {
+            try
+            {
+                if (selected_record_datatab == null)
+                    return;
+                MetroTunnelDB Database = new MetroTunnelDB();
+                List<DataOverview> dataOverviews = new List<DataOverview>();
+                Database.QueryDataOverview(ref dataOverviews, Convert.ToInt32(selected_record_datatab.RecordNum), selected_distance_datatab - distance_query_range, selected_distance_datatab + distance_query_range);
+                if (dataOverviews.Count < 1)
+                {
+                    return;
+                }
+                Dispatcher.Invoke(new Action(() =>
+                {
+                    Data_List_DataTab.Items.Clear();
+                    Data_List_DataTab.Items.Add(new DataListItem("..."));
+                }));
+                for (int i = 0; i < dataOverviews.Count; i++)
+                {
+                    Dispatcher.Invoke(new Action(() =>
+                    {
+                        Data_List_DataTab.Items.Add(new DataListItem(dataOverviews[i].Distance, dataOverviews[i].LongAxis, dataOverviews[i].ShortAxis,
+                            dataOverviews[i].HorizontalAxis, dataOverviews[i].Rotation, dataOverviews[i].Constriction, dataOverviews[i].Crack));
+                    }));
+                }
+                Dispatcher.Invoke(new Action(() =>
+                {
+                    Data_List_DataTab.Items.Add(new DataListItem("..."));
+                }));
+            }
+            catch (System.NullReferenceException)
+            {
+                return;
+            }
+            catch (System.Exception)
+            {
+                return;
+            }
+        }
 
         private void Search_Record_Button_DataTab_Click(object sender, RoutedEventArgs e)
         {
@@ -1729,11 +1865,13 @@ namespace FileIO_UI
             try
             {
                 MetroTunnelDB Database = new MetroTunnelDB();
-                Database.GetMaxMinDetectDataDistance(Convert.ToInt32(selected_record_datatab.RecordNum), ref start_distance, ref end_distance);
-                Start_Distance_Text.Text = start_distance.ToString();
-                End_Distance_Text.Text = end_distance.ToString();
-                Distance_Slider.Minimum = start_distance;
-                Distance_Slider.Maximum = end_distance;
+                Database.GetMaxMinDetectDataDistance(Convert.ToInt32(selected_record_datatab.RecordNum), ref start_distance_record, ref end_distance_record);
+                start_distance_datatab = start_distance_record;
+                end_distance_datatab = end_distance_record;
+                Start_Distance_Text.Text = start_distance_datatab.ToString();
+                End_Distance_Text.Text = end_distance_datatab.ToString();
+                Distance_Slider.Minimum = start_distance_datatab;
+                Distance_Slider.Maximum = end_distance_datatab;
             }
             catch(System.Exception)
             {
@@ -2079,6 +2217,11 @@ namespace FileIO_UI
                     Section_Image_DataTab.Source = bmpSource;
                 }              
             }
+        }
+
+        private void End_Distance_Text_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+
         }
 
         public void DataTab_MouseUp(object sender, MouseButtonEventArgs e)

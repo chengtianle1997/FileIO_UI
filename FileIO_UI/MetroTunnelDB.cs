@@ -1115,7 +1115,7 @@ namespace libMetroTunnelDB
         public void QueryDataOverview(ref List<DataOverview> arr, int RecordID, double min_Distance = 0, double max_Distance = double.MaxValue)
         {
             String formatStr = "SELECT * FROM DataOverview WHERE RecordID={0} AND Distance>={1} AND Distance<={2}";
-            String queryStr = String.Format(formatStr, RecordID, min_Distance, max_Distance);
+            String queryStr = String.Format(formatStr, RecordID, min_Distance.ToString("#.00"), max_Distance.ToString("#.00"));
             DoQuery(queryStr, ref arr, ReadDataOverview);
         }
 
