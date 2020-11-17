@@ -31,7 +31,7 @@ namespace FileIO_UI
                 s_val = _s_val;
                 left = null;
                 right = null;
-                color = BLACK;
+                color = RED;
             }
         }
 
