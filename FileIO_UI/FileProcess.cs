@@ -306,7 +306,14 @@ namespace FileIO
         public static void MergeEncodeResult(int record_id)
         {
             mw.DebugWriteLine("视频序列整合...");
-            DataBase.ProcessImageRaw(record_id, mw);
+            try
+            {
+                DataBase.ProcessImageRaw(record_id, mw);
+            }
+            catch(System.Exception)
+            {
+                ;
+            }
             mw.DebugWriteLine("视频序列整合完成");
         }
         

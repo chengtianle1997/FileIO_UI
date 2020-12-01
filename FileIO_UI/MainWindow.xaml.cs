@@ -1911,9 +1911,9 @@ namespace FileIO_UI
                 {
                     // Get alive camera index
                     List<int> cam_alive = new List<int>();
-                    Database.GetAliveCamEnc(Convert.ToInt32(selected_record_datatab.RecordNum), ref cam_alive);
+                    Database.GetAliveCam(Convert.ToInt32(selected_record_datatab.RecordNum), ref cam_alive);
                     // Get frame interval
-                    int interval = Database.GetFrameIntervalEnc(Convert.ToInt32(selected_record_datatab.RecordNum), cam_alive[0]);
+                    int interval = Database.GetFrameInterval(Convert.ToInt32(selected_record_datatab.RecordNum), cam_alive[0]);
                     if (interval == 0)
                         return;
                     int max_interval = (int)(interval * 1.5);
